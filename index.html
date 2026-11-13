@@ -117,11 +117,112 @@ table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px s
 <label>Sprachtempo: <input id="rate" type="range" min="0.7" max="1.1" step="0.05" value="0.9"> <span id="rateVal">0.90</span></label>
 <p>Empfohlen für A1: <b>0.90</b>. Das entspricht ungefähr dem Tempo der früheren Version.</p>
 <div class="warning">Wenn dein Browser keine echte <b>pt-PT</b>-Stimme anbietet, zeigt die App das ausdrücklich an. Dann wird nicht heimlich eine andere portugiesische Stimme verwendet.</div>
+<div class="status" style="margin-top:12px"><b>☁️ Synchronisierung:</b> <span id="syncStatus">wird geprüft …</span></div>
 </section>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 "use strict";
+
+// --- Cloud-Synchronisierung via Supabase ---
+const SUPABASE_URL="https://juwmqewcsyhyjwvnc...supabase.co";
+const SUPABASE_KEY="sb_publishable_vxgqCNYRCIc2nYcqKX4YdA_APo6uDiY";
+const SYNC_ID="falar-portugues-personal";
+let cloud=null;
+let cloudReady=false;
+
+try{
+  cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  cloudReady=true;
+}catch(e){ cloudReady=false; }
+
+function mergeData(localData,cloudData){
+  const out=JSON.parse(JSON.stringify(cloudData||{}));
+  Object.keys(localData||{}).forEach(k=>{
+    if(!out[k]) out[k]=[];
+    const seen=new Set(out[k].map(x=>JSON.stringify(x)));
+    (localData[k]||[]).forEach(x=>{
+      const key=JSON.stringify(x);
+      if(!seen.has(key)){ out[k].push(x); seen.add(key); }
+    });
+  });
+  return out;
+}
+
+async function cloudSync(){
+  if(!cloudReady) return;
+  try{
+    const payload={
+      data:DATA,
+      state:state,
+      updated_at:new Date().toISOString()
+    };
+    const {error}=await cloud.from("falar_data").upsert(
+      {id:SYNC_ID,data:payload},
+      {onConflict:"id"}
+    );
+    if(error) throw error;
+    setSyncStatus("☁️ Synchronisiert");
+  }catch(e){
+    setSyncStatus("⚠️ Cloud-Sync nicht möglich");
+  }
+}
+
+async function cloudLoad(){
+  if(!cloudReady) return;
+  try{
+    const {data,error}=await cloud.from("falar_data").select("data").eq("id",SYNC_ID).maybeSingle();
+    if(error) throw error;
+
+    const localData=JSON.parse(JSON.stringify(DATA));
+    const localState=JSON.parse(JSON.stringify(state));
+
+    if(data && data.data){
+      const remoteData=data.data.data||{};
+      const remoteState=data.data.state||{"stars":{}};
+
+      DATA=mergeData(localData,remoteData);
+      state.stars=Object.assign({},remoteState.stars||{},localState.stars||{});
+
+      localStorage.setItem("falarWebData",JSON.stringify(DATA));
+      localStorage.setItem("falarWebState",JSON.stringify(state));
+
+      refreshDataUI();
+      setSyncStatus("☁️ Synchronisiert");
+    }else{
+      await cloudSync();
+    }
+  }catch(e){
+    setSyncStatus("⚠️ Cloud-Sync nicht möglich");
+  }
+}
+
+function setSyncStatus(text){
+  const el=document.getElementById("syncStatus");
+  if(el) el.textContent=text;
+}
+
+function refreshDataUI(){
+  ["listenChapter","learnChapter"].forEach(id=>{
+    const s=document.getElementById(id);
+    if(!s) return;
+    const old=s.value;
+    s.innerHTML="";
+    Object.keys(DATA).forEach(k=>s.add(new Option(NAMES[k]||k,k)));
+    if(DATA[old]) s.value=old;
+  });
+  renderChapters();
+  renderCard();
+}
+
+async function saveAllData(){
+  localStorage.setItem("falarWebData",JSON.stringify(DATA));
+  localStorage.setItem("falarWebState",JSON.stringify(state));
+  await cloudSync();
+}
+
+
 let DATA={"zeit": [["a hora", "die Uhrzeit"], ["o minuto", "die Minute"], ["o dia", "der Tag"], ["a semana", "die Woche"], ["o mês", "der Monat"], ["o ano", "das Jahr"], ["hoje", "heute"], ["amanhã", "morgen"], ["ontem", "gestern"], ["de manhã", "am Morgen"], ["à tarde", "am Nachmittag"], ["à noite", "am Abend / in der Nacht"]], "fragen": [["quem", "wer"], ["o que", "was"], ["onde", "wo"], ["quando", "wann"], ["como", "wie"], ["porquê", "warum"], ["qual", "welche/r/s"], ["quanto", "wie viel"], ["quantos", "wie viele"]], "kueche": [["a cozinha", "die Küche"], ["o frigorífico", "der Kühlschrank"], ["o congelador", "der Gefrierschrank"], ["o fogão", "der Herd"], ["o forno", "der Backofen"], ["o micro-ondas", "die Mikrowelle"], ["a máquina de lavar loiça", "die Spülmaschine"], ["o lava-loiça", "das Spülbecken"], ["a bancada", "die Arbeitsplatte"], ["o armário", "der Schrank"], ["a gaveta", "die Schublade"], ["a mesa", "der Tisch"], ["a cadeira", "der Stuhl"], ["o prato", "der Teller"], ["o copo", "das Glas"], ["a chávena", "die Tasse"], ["a faca", "das Messer"], ["o garfo", "die Gabel"], ["a colher", "der Löffel"], ["a panela", "der Topf"], ["a frigideira", "die Pfanne"], ["a cafeteira", "die Kaffeekanne"], ["a torradeira", "der Toaster"], ["a chaleira", "der Wasserkocher"]], "haus": [["a casa", "das Haus"], ["o apartamento", "die Wohnung"], ["a sala de estar", "das Wohnzimmer"], ["o quarto", "das Schlafzimmer"], ["a casa de banho", "das Badezimmer"], ["o corredor", "der Flur"], ["a varanda", "der Balkon"], ["o jardim", "der Garten"], ["a porta", "die Tür"], ["a janela", "das Fenster"], ["a parede", "die Wand"], ["o chão", "der Boden"], ["o teto", "die Decke"], ["a escada", "die Treppe"], ["o sofá", "das Sofa"], ["a televisão", "der Fernseher"], ["a cama", "das Bett"], ["o espelho", "der Spiegel"], ["o duche", "die Dusche"], ["a banheira", "die Badewanne"], ["o lavatório", "das Waschbecken"], ["a toalha", "das Handtuch"], ["o candeeiro", "die Lampe"], ["a chave", "der Schlüssel"], ["o aspirador", "der Staubsauger"], ["a máquina de lavar roupa", "die Waschmaschine"]], "essen": [["a água", "das Wasser"], ["o pão", "das Brot"], ["o queijo", "der Käse"], ["a manteiga", "die Butter"], ["o leite", "die Milch"], ["o café", "der Kaffee"], ["o chá", "der Tee"], ["o sumo", "der Saft"], ["o vinho", "der Wein"], ["a cerveja", "das Bier"], ["a maçã", "der Apfel"], ["a banana", "die Banane"], ["a laranja", "die Orange"], ["o tomate", "die Tomate"], ["a batata", "die Kartoffel"], ["o arroz", "der Reis"], ["a massa", "die Nudeln / Pasta"], ["a carne", "das Fleisch"], ["o peixe", "der Fisch"], ["o frango", "das Hähnchen"], ["o pequeno-almoço", "das Frühstück"], ["o almoço", "das Mittagessen"], ["o jantar", "das Abendessen"], ["a sobremesa", "der Nachtisch"], ["a refeição", "die Mahlzeit"], ["a fome", "der Hunger"], ["a sede", "der Durst"], ["delicioso", "köstlich"], ["quente", "heiß / warm"], ["frio", "kalt"]]};
 const NAMES={"zeit": "Zeitangaben", "fragen": "Fragewörter", "kueche": "Küche", "haus": "Haus & Wohnung", "essen": "Essen & Trinken"};
 try{ const saved=localStorage.getItem("falarWebData"); if(saved){ const parsed=JSON.parse(saved); if(parsed && typeof parsed==="object") DATA=parsed; } }catch(e){}
@@ -274,7 +375,7 @@ function renderCard(){
   const x=arr[learn.idx], c=document.getElementById("card");
   c.innerHTML="";
   const star=document.createElement("button");star.className="star";star.textContent=state.stars[x.key]?"⭐":"☆";
-  star.onclick=()=>{state.stars[x.key]=!state.stars[x.key];localStorage.setItem("falarWebState",JSON.stringify(state));renderCard();};
+  star.onclick=()=>{state.stars[x.key]=!state.stars[x.key];saveAllData();renderCard();};
   c.appendChild(star);
   const p=document.createElement("div");p.className="big";p.textContent=learn.flipped?x.de:x.pt;c.appendChild(p);
   const small=document.createElement("div");small.className="translation";small.textContent=learn.flipped?x.pt:"";c.appendChild(small);
@@ -316,7 +417,7 @@ function editChapter(k){
  const save=document.createElement("button");save.className="btn primary";save.textContent="💾 Änderungen speichern";
  save.onclick=()=>{
    [...table.rows].slice(1).forEach((tr,i)=>{DATA[k][i][0]=tr.cells[0].querySelector("input").value;DATA[k][i][1]=tr.cells[1].querySelector("input").value;});
-   localStorage.setItem("falarWebData",JSON.stringify(DATA));alert("Gespeichert.");
+   saveAllData();alert("Gespeichert und synchronisiert.");
  };
  box.appendChild(save);
 }
@@ -357,6 +458,11 @@ document.addEventListener("visibilitychange", async ()=>{
   }
 });
 window.addEventListener("pagehide", ()=>{ releaseWakeLock(); });
+
+window.addEventListener("load", ()=>{
+  setSyncStatus(cloudReady ? "verbinde …" : "Cloud nicht verfügbar");
+  setTimeout(()=>cloudLoad(),300);
+});
 
 </script>
 <script>
