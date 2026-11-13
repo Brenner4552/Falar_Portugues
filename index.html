@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#263746">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Falar Português – Web</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#18202a;background:#f4f6f8}
+*{box-sizing:border-box} body{margin:0} button,select,input{font:inherit}
+.app{max-width:1000px;margin:auto;padding:20px}
+header{background:white;border-radius:20px;padding:24px;box-shadow:0 4px 18px #00000012}
+h1{margin:0 0 6px} h2{margin-top:0} .sub{color:#5f6873;margin:0}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+nav button,.btn{border:1px solid #cfd6dd;background:white;border-radius:12px;padding:10px 14px;cursor:pointer}
+nav button.active,.btn.primary{background:#1f2937;color:white;border-color:#1f2937}
+.panel{background:white;border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 3px 15px #0000000d}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.chapter{text-align:left;padding:16px;border:1px solid #d7dde3;border-radius:15px;background:#fff;cursor:pointer}
+.chapter b{display:block;font-size:1.05rem} .chapter small{color:#6a737d}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.big{font-size:2rem;margin:10px 0} .pt{font-family:system-ui,sans-serif}
+.translation{font-size:1.25rem;color:#59636e}
+.status{padding:10px 12px;background:#eef3f7;border-radius:10px;margin:10px 0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=range]{width:220px} textarea{width:100%;padding:12px;border:1px solid #cfd6dd;border-radius:12px}
+table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px solid #e6eaee;text-align:left}
+.star{cursor:pointer;font-size:1.25rem;background:none;border:0}
+.voiceok{font-size:.9rem;color:#49606e} .warning{background:#fff4d6;padding:12px;border-radius:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<h1>🇵🇹 Falar Português</h1>
+<p class="sub">Europäisches Portugiesisch · Zuhören · Vokabeln · Tutor</p>
+</header>
+
+<nav id="menu">
+<button data-page="home" class="active">🏠 Start</button>
+<button data-page="listen">🎧 Zuhören</button>
+<button data-page="learn">🧠 Vokabeln lernen</button>
+<button data-page="chapters">📚 Kapitel</button>
+<button data-page="tutor">🗣️ Tutor</button>
+<button data-page="settings">⚙️ Einstellungen</button>
+</nav>
+
+<section id="home" class="panel page">
+<h2>Was möchtest du heute machen?</h2>
+<div class="grid">
+<button class="chapter" onclick="showPage('listen')"><b>🎧 Zuhören</b><small>Endlosschleife mit Portugiesisch → Deutsch</small></button>
+<button class="chapter" onclick="showPage('learn')"><b>🧠 Vokabeln lernen</b><small>Karteikarten und schwierige Wörter</small></button>
+<button class="chapter" onclick="showPage('chapters')"><b>📚 Kapitel</b><small>Alle Themen getrennt verwalten</small></button>
+<button class="chapter" onclick="showPage('tutor')"><b>🗣️ Tutor</b><small>Kurze A1-Übungen</small></button>
+</div>
+</section>
+
+<section id="listen" class="panel page hidden">
+<h2>🎧 Zuhören</h2>
+<div class="controls">
+<label>Kapitel <select id="listenChapter"></select></label>
+<label>Wiederholung <select id="repeatMode"><option value="normal">normal</option><option value="difficult">⭐ Schwierige öfter</option><option value="random">zufällig</option></select></label>
+<label>Wort wiederholen <select id="wordRepeats"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+<label>Pause <input id="pauseSec" type="range" min="1" max="8" value="3"><span id="pauseVal">3 s</span></label>
+</div>
+<div class="status" id="voiceStatus">Prüfe Portugiesisch-Stimme …</div>
+<div class="panel" style="background:#fafbfc">
+<div class="big pt" id="listenPt">–</div>
+<div class="translation" id="listenDe">–</div>
+</div>
+<div class="row">
+<button class="btn primary" id="listenStart">▶ Start</button>
+<button class="btn" id="listenPause">⏸ Pause</button>
+<button class="btn" id="listenStop">⏹ Stopp</button>
+</div>
+<p class="voiceok">⭐ <b>Schwierige Wörter</b> sind die Wörter, die du beim Lernen mit dem Stern markierst. Sind keine markiert, läuft dieser Modus normal weiter.</p>
+<p class="voiceok">Die Sprachlogik verwendet ausdrücklich eine <b>pt-PT</b>-Stimme. Es wird nicht stillschweigend auf eine brasilianische Stimme gewechselt.</p>
+</section>
+
+<section id="learn" class="panel page hidden">
+<h2>🧠 Vokabeln lernen</h2>
+<label>Kapitel <select id="learnChapter"></select></label>
+<div id="card" class="panel"></div>
+<div class="row">
+<button class="btn primary" onclick="flipCard()">Umdrehen</button>
+<button class="btn" onclick="nextCard()">Weiter</button>
+</div>
+</section>
+
+<section id="chapters" class="panel page hidden">
+<h2>📚 Kapitel</h2>
+<div id="chapterGrid" class="grid"></div>
+<div id="chapterEdit" class="panel hidden"></div>
+</section>
+
+<section id="tutor" class="panel page hidden">
+<h2>🗣️ A1 Tutor</h2>
+<p>Schreibe einen einfachen Satz auf Portugiesisch. Ich gebe dir eine lokale Übungsantwort und eine Korrektur.</p>
+<textarea id="tutorIn" rows="3" placeholder="z. B. Eu gosto de cozinhar."></textarea>
+<div class="row" style="margin-top:10px">
+<button class="btn primary" onclick="tutorCheck()">Prüfen</button>
+<button class="btn" onclick="speakPt(document.getElementById('tutorIn').value)">🔊 Vorlesen</button>
+</div>
+<div id="tutorOut" class="status"></div>
+</section>
+
+<section id="settings" class="panel page hidden">
+<h2>⚙️ Einstellungen</h2>
+<div class="status">
+<b>Portugiesische Stimme:</b>
+<div id="voiceDetails">wird geprüft …</div>
+</div>
+<label>Sprachtempo: <input id="rate" type="range" min="0.7" max="1.1" step="0.05" value="0.9"> <span id="rateVal">0.90</span></label>
+<p>Empfohlen für A1: <b>0.90</b>. Das entspricht ungefähr dem Tempo der früheren Version.</p>
+<div class="warning">Wenn dein Browser keine echte <b>pt-PT</b>-Stimme anbietet, zeigt die App das ausdrücklich an. Dann wird nicht heimlich eine andere portugiesische Stimme verwendet.</div>
+</section>
+</div>
+
+<script>
+"use strict";
+const DATA={"zeit": [["a hora", "die Uhrzeit"], ["o minuto", "die Minute"], ["o dia", "der Tag"], ["a semana", "die Woche"], ["o mês", "der Monat"], ["o ano", "das Jahr"], ["hoje", "heute"], ["amanhã", "morgen"], ["ontem", "gestern"], ["de manhã", "am Morgen"], ["à tarde", "am Nachmittag"], ["à noite", "am Abend / in der Nacht"]], "fragen": [["quem", "wer"], ["o que", "was"], ["onde", "wo"], ["quando", "wann"], ["como", "wie"], ["porquê", "warum"], ["qual", "welche/r/s"], ["quanto", "wie viel"], ["quantos", "wie viele"]], "kueche": [["a cozinha", "die Küche"], ["o frigorífico", "der Kühlschrank"], ["o congelador", "der Gefrierschrank"], ["o fogão", "der Herd"], ["o forno", "der Backofen"], ["o micro-ondas", "die Mikrowelle"], ["a máquina de lavar loiça", "die Spülmaschine"], ["o lava-loiça", "das Spülbecken"], ["a bancada", "die Arbeitsplatte"], ["o armário", "der Schrank"], ["a gaveta", "die Schublade"], ["a mesa", "der Tisch"], ["a cadeira", "der Stuhl"], ["o prato", "der Teller"], ["o copo", "das Glas"], ["a chávena", "die Tasse"], ["a faca", "das Messer"], ["o garfo", "die Gabel"], ["a colher", "der Löffel"], ["a panela", "der Topf"], ["a frigideira", "die Pfanne"], ["a cafeteira", "die Kaffeekanne"], ["a torradeira", "der Toaster"], ["a chaleira", "der Wasserkocher"]], "haus": [["a casa", "das Haus"], ["o apartamento", "die Wohnung"], ["a sala de estar", "das Wohnzimmer"], ["o quarto", "das Schlafzimmer"], ["a casa de banho", "das Badezimmer"], ["o corredor", "der Flur"], ["a varanda", "der Balkon"], ["o jardim", "der Garten"], ["a porta", "die Tür"], ["a janela", "das Fenster"], ["a parede", "die Wand"], ["o chão", "der Boden"], ["o teto", "die Decke"], ["a escada", "die Treppe"], ["o sofá", "das Sofa"], ["a televisão", "der Fernseher"], ["a cama", "das Bett"], ["o espelho", "der Spiegel"], ["o duche", "die Dusche"], ["a banheira", "die Badewanne"], ["o lavatório", "das Waschbecken"], ["a toalha", "das Handtuch"], ["o candeeiro", "die Lampe"], ["a chave", "der Schlüssel"], ["o aspirador", "der Staubsauger"], ["a máquina de lavar roupa", "die Waschmaschine"]], "essen": [["a água", "das Wasser"], ["o pão", "das Brot"], ["o queijo", "der Käse"], ["a manteiga", "die Butter"], ["o leite", "die Milch"], ["o café", "der Kaffee"], ["o chá", "der Tee"], ["o sumo", "der Saft"], ["o vinho", "der Wein"], ["a cerveja", "das Bier"], ["a maçã", "der Apfel"], ["a banana", "die Banane"], ["a laranja", "die Orange"], ["o tomate", "die Tomate"], ["a batata", "die Kartoffel"], ["o arroz", "der Reis"], ["a massa", "die Nudeln / Pasta"], ["a carne", "das Fleisch"], ["o peixe", "der Fisch"], ["o frango", "das Hähnchen"], ["o pequeno-almoço", "das Frühstück"], ["o almoço", "das Mittagessen"], ["o jantar", "das Abendessen"], ["a sobremesa", "der Nachtisch"], ["a refeição", "die Mahlzeit"], ["a fome", "der Hunger"], ["a sede", "der Durst"], ["delicioso", "köstlich"], ["quente", "heiß / warm"], ["frio", "kalt"]]};
+const NAMES={"zeit": "Zeitangaben", "fragen": "Fragewörter", "kueche": "Küche", "haus": "Haus & Wohnung", "essen": "Essen & Trinken"};
+let state=JSON.parse(localStorage.getItem("falarWebState")||'{"stars":{}}');
+if(!state.stars) state.stars={};
+let synth=window.speechSynthesis;
+let ptVoice=null, deVoice=null, voicesReady=false;
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  if(id==="chapters") renderChapters();
+}
+document.querySelectorAll("#menu button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+
+function chooseVoices(){
+  if(!synth) return;
+  const vs=synth.getVoices();
+  ptVoice=vs.find(v=>v.lang.replace("_","-").toLowerCase()==="pt-pt")||null;
+  deVoice=vs.find(v=>v.lang.replace("_","-").toLowerCase()==="de-de")||
+          vs.find(v=>v.lang.toLowerCase().startsWith("de"))||null;
+  voicesReady=vs.length>0;
+  const txt=ptVoice ? "✓ "+ptVoice.name+" ("+ptVoice.lang+")" : "⚠ Keine pt-PT-Stimme im Browser verfügbar.";
+  document.getElementById("voiceStatus").textContent=txt;
+  document.getElementById("voiceDetails").textContent=txt;
+}
+if(synth){chooseVoices();synth.onvoiceschanged=chooseVoices;}
+
+function speakPt(text, done){
+  if(!synth||!text)return;
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="pt-PT";
+  if(ptVoice)u.voice=ptVoice;
+  u.rate=Number(document.getElementById("rate").value||.9);
+  u.pitch=1;
+  if(done)u.onend=done;
+  synth.speak(u);
+}
+function speakDe(text, done){
+  if(!synth||!text)return;
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="de-DE";
+  if(deVoice)u.voice=deVoice;
+  u.rate=Number(document.getElementById("rate").value||.9);
+  if(done)u.onend=done;
+  synth.speak(u);
+}
+
+const selects=["listenChapter","learnChapter"];
+for(const id of selects){
+  const s=document.getElementById(id);
+  Object.keys(DATA).forEach(k=>s.add(new Option(NAMES[k],k)));
+}
+document.getElementById("rate").oninput=e=>document.getElementById("rateVal").textContent=Number(e.target.value).toFixed(2);
+document.getElementById("pauseSec").oninput=e=>document.getElementById("pauseVal").textContent=e.target.value+" s";
+
+let listen={running:false,paused:false,index:0,token:0,repeatLeft:0,currentIndex:null};
+function getItems(ch){
+  return DATA[ch].map((x,i)=>({pt:x[0],de:x[1],key:ch+"_"+i}));
+}
+function pickNext(arr){
+  const mode=document.getElementById("repeatMode").value;
+  if(mode==="random")return Math.floor(Math.random()*arr.length);
+  return listen.index%arr.length;
+}
+function chooseDifficult(arr){
+  const difficult=arr.filter(x=>state.stars[x.key]);
+  if(difficult.length) return difficult[Math.floor(Math.random()*difficult.length)];
+  return null;
+}
+function listenStep(token){
+  if(token!==listen.token||!listen.running||listen.paused)return;
+  const arr=getItems(document.getElementById("listenChapter").value);
+  if(!arr.length)return;
+
+  // Während 2×/3× immer dasselbe Wort wiederholen – auch im Zufallsmodus.
+  let i;
+  if(listen.repeatLeft>0 && listen.currentIndex!==null){
+    i=listen.currentIndex;
+  }else{
+    const mode=document.getElementById("repeatMode").value;
+    if(mode==="difficult"){
+      const d=chooseDifficult(arr);
+      i=d ? arr.indexOf(d) : pickNext(arr);
+    }else{
+      i=pickNext(arr);
+    }
+    listen.currentIndex=i;
+    listen.repeatLeft=Math.max(1,Number(document.getElementById("wordRepeats").value));
+  }
+
+  const item=arr[i];
+  document.getElementById("listenPt").textContent=item.pt;
+  document.getElementById("listenDe").textContent="";
+  speakPt(item.pt,()=>{
+    if(token!==listen.token||!listen.running||listen.paused)return;
+    speakDe(item.de,()=>{
+      if(token!==listen.token||!listen.running||listen.paused)return;
+      document.getElementById("listenDe").textContent=item.de;
+      setTimeout(()=>{
+        if(token!==listen.token||!listen.running||listen.paused)return;
+        listen.repeatLeft--;
+        if(listen.repeatLeft>0){
+          listenStep(token);
+        }else{
+          listen.currentIndex=null;
+          listen.index++;
+          listenStep(token);
+        }
+      },Number(document.getElementById("pauseSec").value)*1000);
+    });
+  });
+}
+document.getElementById("listenStart").onclick=()=>{
+  listen.running=true;listen.paused=false;listen.token++;
+  listen.repeatLeft=0;listen.currentIndex=null;
+  requestWakeLock();
+  listenStep(listen.token);
+};
+document.getElementById("listenPause").onclick=()=>{
+  listen.paused=!listen.paused;
+  if(listen.paused){
+    synth.cancel();
+    releaseWakeLock();
+    document.getElementById("listenPause").textContent="▶ Weiter";
+  }else{
+    document.getElementById("listenPause").textContent="⏸ Pause";
+    listen.token++;
+    requestWakeLock();
+    // Beim Fortsetzen das aktuelle Wort von vorn sprechen.
+    listen.repeatLeft=Math.max(1,listen.repeatLeft);
+    listenStep(listen.token);
+  }
+};
+document.getElementById("listenStop").onclick=()=>{
+  listen.running=false;listen.paused=false;listen.token++;
+  listen.repeatLeft=0;listen.currentIndex=null;synth.cancel();releaseWakeLock();
+  document.getElementById("listenPt").textContent="–";
+  document.getElementById("listenDe").textContent="–";
+  document.getElementById("listenPause").textContent="⏸ Pause";
+};
+
+let learn={idx:0,flipped:false};
+function renderCard(){
+  const ch=document.getElementById("learnChapter").value, arr=getItems(ch);
+  if(!arr.length)return;
+  if(learn.idx>=arr.length)learn.idx=0;
+  const x=arr[learn.idx], c=document.getElementById("card");
+  c.innerHTML="";
+  const star=document.createElement("button");star.className="star";star.textContent=state.stars[x.key]?"⭐":"☆";
+  star.onclick=()=>{state.stars[x.key]=!state.stars[x.key];localStorage.setItem("falarWebState",JSON.stringify(state));renderCard();};
+  c.appendChild(star);
+  const p=document.createElement("div");p.className="big";p.textContent=learn.flipped?x.de:x.pt;c.appendChild(p);
+  const small=document.createElement("div");small.className="translation";small.textContent=learn.flipped?x.pt:"";c.appendChild(small);
+  const speak=document.createElement("button");speak.className="btn";speak.textContent="🔊 Portugiesisch";speak.onclick=()=>speakPt(x.pt);c.appendChild(speak);
+}
+document.getElementById("learnChapter").onchange=()=>{learn.idx=0;learn.flipped=false;renderCard();};
+function flipCard(){learn.flipped=!learn.flipped;renderCard();}
+function nextCard(){learn.idx++;learn.flipped=false;renderCard();}
+renderCard();
+
+function renderChapters(){
+ const g=document.getElementById("chapterGrid");g.innerHTML="";
+ Object.keys(DATA).forEach(k=>{
+   const b=document.createElement("button");b.className="chapter";
+   b.innerHTML="<b>"+NAMES[k]+"</b><small>"+DATA[k].length+" Einträge · ✏️ bearbeiten</small>";
+   b.onclick=()=>editChapter(k);g.appendChild(b);
+ });
+}
+function editChapter(k){
+ const box=document.getElementById("chapterEdit");box.classList.remove("hidden");
+ box.innerHTML="<h3>"+NAMES[k]+"</h3>";
+ const table=document.createElement("table");
+ table.innerHTML="<tr><th>Portugiesisch</th><th>Deutsch</th><th></th></tr>";
+ DATA[k].forEach((x,i)=>{
+   const tr=document.createElement("tr");
+   const a=document.createElement("input");a.value=x[0];a.style.width="100%";
+   const d=document.createElement("input");d.value=x[1];d.style.width="100%";
+   const del=document.createElement("button");del.className="btn";del.textContent="🗑️";
+   del.onclick=()=>{DATA[k].splice(i,1);editChapter(k);};
+   tr.appendChild(document.createElement("td")).appendChild(a);
+   tr.appendChild(document.createElement("td")).appendChild(d);
+   tr.appendChild(document.createElement("td")).appendChild(del);
+   table.appendChild(tr);
+ });
+ box.appendChild(table);
+ const add=document.createElement("button");add.className="btn";add.textContent="➕ Wort hinzufügen";
+ add.onclick=()=>{DATA[k].push(["",""]);editChapter(k);};
+ box.appendChild(add);
+ const save=document.createElement("button");save.className="btn primary";save.textContent="💾 Änderungen speichern";
+ save.onclick=()=>{
+   [...table.rows].slice(1).forEach((tr,i)=>{DATA[k][i][0]=tr.cells[0].querySelector("input").value;DATA[k][i][1]=tr.cells[1].querySelector("input").value;});
+   localStorage.setItem("falarWebData",JSON.stringify(DATA));alert("Gespeichert.");
+ };
+ box.appendChild(save);
+}
+
+function tutorCheck(){
+ const t=document.getElementById("tutorIn").value.trim();
+ let out="Perfeito! Versuch den Satz laut zu sprechen.";
+ if(/eu gosto cozinhar/i.test(t))out="Korrektur: Eu gosto de cozinhar. → Nach „gostar“ kommt de + Infinitiv.";
+ else if(/eu quero de/i.test(t))out="Korrektur: Eu quero cozinhar. → Nach „querer“ kommt direkt der Infinitiv.";
+ else if(/eu falo portugues/i.test(t))out="Korrektur: Eu falo português. → Akzent: português.";
+ else if(/eu vivo em funchal/i.test(t))out="Korrektur: Eu vivo no Funchal. → Üblich ist „no Funchal“.";
+ document.getElementById("tutorOut").textContent=out;
+}
+
+// --- Mobile screen wake lock ---
+let wakeLock = null;
+
+async function requestWakeLock(){
+  if(!("wakeLock" in navigator)) return false;
+  try{
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", ()=>{ wakeLock=null; });
+    return true;
+  }catch(e){
+    wakeLock=null;
+    return false;
+  }
+}
+async function releaseWakeLock(){
+  if(wakeLock){
+    try{ await wakeLock.release(); }catch(e){}
+    wakeLock=null;
+  }
+}
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState==="visible" && listen.running && !listen.paused){
+    await requestWakeLock();
+  }
+});
+window.addEventListener("pagehide", ()=>{ releaseWakeLock(); });
+
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "Falar Português",
+  "short_name": "Português",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#263746",
+  "lang": "de",
+  "description": "Persönlicher Portugiesisch-Trainer für europäisches Portugiesisch (pt-PT)",
+  "icons": []
+}
