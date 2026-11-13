@@ -166,13 +166,13 @@ async function cloudSync(){
     let mergedState=state;
 
     if(remote && remote.data){
-      const remoteData=remote.data.data||{};
+      const remoteData=normalizeKitchenData(remote.data.data||{});
       const remoteState=remote.data.state||{"stars":{}};
       mergedData=mergeData(DATA,remoteData);
       mergedState.stars=Object.assign({},remoteState.stars||{},state.stars||{});
     }
 
-    DATA=mergedData;
+    DATA=normalizeKitchenData(mergedData);
     state=mergedState;
 
     localStorage.setItem("falarWebData",JSON.stringify(DATA));
@@ -209,7 +209,7 @@ async function cloudLoad(){
     const localState=JSON.parse(JSON.stringify(state));
 
     if(data && data.data){
-      const remoteData=data.data.data||{};
+      const remoteData=normalizeKitchenData(data.data.data||{});
       const remoteState=data.data.state||{"stars":{}};
 
       DATA=mergeData(localData,remoteData);
@@ -254,9 +254,23 @@ async function saveAllData(){
 }
 
 
-let DATA={"zeit": [["a hora", "die Uhrzeit"], ["o minuto", "die Minute"], ["o dia", "der Tag"], ["a semana", "die Woche"], ["o mês", "der Monat"], ["o ano", "das Jahr"], ["hoje", "heute"], ["amanhã", "morgen"], ["ontem", "gestern"], ["de manhã", "am Morgen"], ["à tarde", "am Nachmittag"], ["à noite", "am Abend / in der Nacht"]], "fragen": [["quem", "wer"], ["o que", "was"], ["onde", "wo"], ["quando", "wann"], ["como", "wie"], ["porquê", "warum"], ["qual", "welche/r/s"], ["quanto", "wie viel"], ["quantos", "wie viele"]], "kueche": [["a cozinha", "die Küche"], ["o frigorífico", "der Kühlschrank"], ["o congelador", "der Gefrierschrank"], ["o fogão", "der Herd"], ["o forno", "der Backofen"], ["o micro-ondas", "die Mikrowelle"], ["a máquina de lavar loiça", "die Spülmaschine"], ["o lava-loiça", "das Spülbecken"], ["a bancada", "die Arbeitsplatte"], ["o armário", "der Schrank"], ["a gaveta", "die Schublade"], ["a mesa", "der Tisch"], ["a cadeira", "der Stuhl"], ["o prato", "der Teller"], ["o copo", "das Glas"], ["a chávena", "die Tasse"], ["a faca", "das Messer"], ["o garfo", "die Gabel"], ["a colher", "der Löffel"], ["a panela", "der Topf"], ["a frigideira", "die Pfanne"], ["a cafeteira", "die Kaffeekanne"], ["a torradeira", "der Toaster"], ["a chaleira", "der Wasserkocher"]], "haus": [["a casa", "das Haus"], ["o apartamento", "die Wohnung"], ["a sala de estar", "das Wohnzimmer"], ["o quarto", "das Schlafzimmer"], ["a casa de banho", "das Badezimmer"], ["o corredor", "der Flur"], ["a varanda", "der Balkon"], ["o jardim", "der Garten"], ["a porta", "die Tür"], ["a janela", "das Fenster"], ["a parede", "die Wand"], ["o chão", "der Boden"], ["o teto", "die Decke"], ["a escada", "die Treppe"], ["o sofá", "das Sofa"], ["a televisão", "der Fernseher"], ["a cama", "das Bett"], ["o espelho", "der Spiegel"], ["o duche", "die Dusche"], ["a banheira", "die Badewanne"], ["o lavatório", "das Waschbecken"], ["a toalha", "das Handtuch"], ["o candeeiro", "die Lampe"], ["a chave", "der Schlüssel"], ["o aspirador", "der Staubsauger"], ["a máquina de lavar roupa", "die Waschmaschine"]], "essen": [["a água", "das Wasser"], ["o pão", "das Brot"], ["o queijo", "der Käse"], ["a manteiga", "die Butter"], ["o leite", "die Milch"], ["o café", "der Kaffee"], ["o chá", "der Tee"], ["o sumo", "der Saft"], ["o vinho", "der Wein"], ["a cerveja", "das Bier"], ["a maçã", "der Apfel"], ["a banana", "die Banane"], ["a laranja", "die Orange"], ["o tomate", "die Tomate"], ["a batata", "die Kartoffel"], ["o arroz", "der Reis"], ["a massa", "die Nudeln / Pasta"], ["a carne", "das Fleisch"], ["o peixe", "der Fisch"], ["o frango", "das Hähnchen"], ["o pequeno-almoço", "das Frühstück"], ["o almoço", "das Mittagessen"], ["o jantar", "das Abendessen"], ["a sobremesa", "der Nachtisch"], ["a refeição", "die Mahlzeit"], ["a fome", "der Hunger"], ["a sede", "der Durst"], ["delicioso", "köstlich"], ["quente", "heiß / warm"], ["frio", "kalt"]]};
-const NAMES={"zeit": "Zeitangaben", "fragen": "Fragewörter", "kueche": "Küche", "haus": "Haus & Wohnung", "essen": "Essen & Trinken"};
+let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","der Tag"],["a semana","die Woche"],["o mês","der Monat"],["o ano","das Jahr"],["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["de manhã","am Morgen"],["à tarde","am Nachmittag"],["à noite","am Abend / in der Nacht"]],"fragen":[["quem","wer"],["o que","was"],["onde","wo"],["quando","wann"],["como","wie"],["porquê","warum"],["qual","welche/r/s"],["quanto","wie viel"],["quantos","wie viele"]],"kueche_geraete":[["a cozinha","die Küche"],["o frigorífico","der Kühlschrank"],["o congelador","der Gefrierschrank"],["o fogão","der Herd"],["o forno","der Backofen"],["o micro-ondas","die Mikrowelle"],["a máquina de lavar loiça","die Spülmaschine"],["o lava-loiça","das Spülbecken"],["a bancada","die Arbeitsplatte"],["o armário","der Schrank"],["a gaveta","die Schublade"],["a mesa","der Tisch"],["a cadeira","der Stuhl"],["o prato","der Teller"],["o copo","das Glas"],["a chávena","die Tasse"],["a faca","das Messer"],["o garfo","die Gabel"],["a colher","der Löffel"],["a panela","der Topf"],["a frigideira","die Pfanne"],["a cafeteira","die Kaffeekanne"],["a torradeira","der Toaster"],["a chaleira","der Wasserkocher"]],"kueche_verben":[],"haus":[["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]],"essen":[["a água","das Wasser"],["o pão","das Brot"],["o queijo","der Käse"],["a manteiga","die Butter"],["o leite","die Milch"],["o café","der Kaffee"],["o chá","der Tee"],["o sumo","der Saft"],["o vinho","der Wein"],["a cerveja","das Bier"],["a maçã","der Apfel"],["a banana","die Banane"],["a laranja","die Orange"],["o tomate","die Tomate"],["a batata","die Kartoffel"],["o arroz","der Reis"],["a massa","die Nudeln / Pasta"],["a carne","das Fleisch"],["o peixe","der Fisch"],["o frango","das Hähnchen"],["o pequeno-almoço","das Frühstück"],["o almoço","das Mittagessen"],["o jantar","das Abendessen"],["a sobremesa","der Nachtisch"],["a refeição","die Mahlzeit"],["a fome","der Hunger"],["a sede","der Durst"],["delicioso","köstlich"],["quente","heiß / warm"],["frio","kalt"]]};
+const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken"};
 try{ const saved=localStorage.getItem("falarWebData"); if(saved){ const parsed=JSON.parse(saved); if(parsed && typeof parsed==="object") DATA=parsed; } }catch(e){}
+
+function normalizeKitchenData(obj){
+  if(!obj || typeof obj!=="object") return obj;
+  if(obj.kueche){
+    if(!obj.kueche_geraete) obj.kueche_geraete=JSON.parse(JSON.stringify(obj.kueche));
+    else obj.kueche_geraete=mergeData({"kueche_geraete":obj.kueche_geraete},{"kueche_geraete":obj.kueche})["kueche_geraete"];
+    delete obj.kueche;
+  }
+  if(!Array.isArray(obj.kueche_geraete)) obj.kueche_geraete=[];
+  if(!Array.isArray(obj.kueche_verben)) obj.kueche_verben=[];
+  return obj;
+}
+
+DATA=normalizeKitchenData(DATA);
 let state=JSON.parse(localStorage.getItem("falarWebState")||'{"stars":{}}');
 if(!state.stars) state.stars={};
 let synth=window.speechSynthesis;
