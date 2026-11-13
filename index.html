@@ -151,21 +151,51 @@ function mergeData(localData,cloudData){
 }
 
 async function cloudSync(){
-  if(!cloudReady) return;
+  if(!cloudReady) return false;
   try{
+    // Vor dem Speichern immer den aktuellen Cloud-Stand holen.
+    // So gehen Änderungen vom anderen Gerät nicht verloren.
+    const {data:remote,error:readError}=await cloud
+      .from("falar_data")
+      .select("data")
+      .eq("id",SYNC_ID)
+      .maybeSingle();
+    if(readError) throw readError;
+
+    let mergedData=DATA;
+    let mergedState=state;
+
+    if(remote && remote.data){
+      const remoteData=remote.data.data||{};
+      const remoteState=remote.data.state||{"stars":{}};
+      mergedData=mergeData(DATA,remoteData);
+      mergedState.stars=Object.assign({},remoteState.stars||{},state.stars||{});
+    }
+
+    DATA=mergedData;
+    state=mergedState;
+
+    localStorage.setItem("falarWebData",JSON.stringify(DATA));
+    localStorage.setItem("falarWebState",JSON.stringify(state));
+
     const payload={
       data:DATA,
       state:state,
       updated_at:new Date().toISOString()
     };
+
     const {error}=await cloud.from("falar_data").upsert(
       {id:SYNC_ID,data:payload},
       {onConflict:"id"}
     );
     if(error) throw error;
+
     setSyncStatus("☁️ Synchronisiert");
+    return true;
   }catch(e){
+    console.error("Supabase-Sync:",e);
     setSyncStatus("⚠️ Cloud-Sync nicht möglich");
+    return false;
   }
 }
 
@@ -189,7 +219,8 @@ async function cloudLoad(){
       localStorage.setItem("falarWebState",JSON.stringify(state));
 
       refreshDataUI();
-      setSyncStatus("☁️ Synchronisiert");
+      // Den zusammengeführten Stand auch wieder in die Cloud schreiben.
+      await cloudSync();
     }else{
       await cloudSync();
     }
