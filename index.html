@@ -30,7 +30,7 @@ nav button.active,.btn.primary{background:#1f4fa3;color:#fff;border-color:#1f4fa
 input[type=range]{width:220px} textarea{width:100%;padding:12px;border:1px solid #cfd6dd;border-radius:12px}
 table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px solid #d3ddeb;text-align:left}
 .star{cursor:pointer;font-size:2rem;line-height:1;min-width:48px;min-height:48px;padding:4px;background:none;border:0}
-.voiceok{font-size:.9rem;color:#49606e} .warning{background:#fff4d6;padding:12px;border-radius:12px}
+.voiceok{font-size:.9rem;color:#49606e} .chars{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.chars button{font:inherit;min-width:34px;padding:4px 6px;background:#fff;color:#13223f;border:1px solid #d3ddeb;border-radius:6px;cursor:pointer}.chars button:hover{background:#e0eafa} .warning{background:#fff4d6;padding:12px;border-radius:12px}
 </style>
 </head>
 <body>
@@ -100,7 +100,7 @@ table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px s
 <section id="tutor" class="panel page hidden">
 <h2>🗣️ A1 Tutor</h2>
 <p>Schreibe einen einfachen Satz auf Portugiesisch. Ich gebe dir eine lokale Übungsantwort und eine Korrektur.</p>
-<textarea id="tutorIn" rows="3" placeholder="z. B. Eu gosto de cozinhar."></textarea>
+<textarea id="tutorIn" rows="3" placeholder="z. B. Eu gosto de cozinhar."></textarea>\n<div class="chars" id="tutorChars" aria-label="Sonderzeichen einfügen"></div>
 <div class="row" style="margin-top:10px">
 <button class="btn primary" onclick="tutorCheck()">Prüfen</button>
 <button class="btn" id="tutorMic" onclick="startTutorMic()">🎙️ Sprechen</button>
@@ -449,9 +449,12 @@ function editChapter(k){
  box.innerHTML="<h3>"+NAMES[k]+"</h3>";
  const table=document.createElement("table");
  table.innerHTML="<tr><th>Portugiesisch</th><th>Deutsch</th><th></th></tr>";
+ let activePtInput=null;
  DATA[k].forEach((x,i)=>{
    const tr=document.createElement("tr");
    const a=document.createElement("input");a.value=x[0];a.style.width="100%";
+   a.onfocus=()=>{activePtInput=a;};
+   a.onclick=()=>{activePtInput=a;};
    const d=document.createElement("input");d.value=x[1];d.style.width="100%";
    const del=document.createElement("button");del.className="btn";del.textContent="🗑️";
    del.onclick=()=>{DATA[k].splice(i,1);editChapter(k);};
@@ -459,8 +462,33 @@ function editChapter(k){
    tr.appendChild(document.createElement("td")).appendChild(d);
    tr.appendChild(document.createElement("td")).appendChild(del);
    table.appendChild(tr);
+   if(!activePtInput) activePtInput=a;
  });
  box.appendChild(table);
+
+ const chars=document.createElement("div");
+ chars.className="chars";
+ chars.setAttribute("aria-label","Sonderzeichen einfügen");
+ const CHARS=["á","à","â","ã","ç","é","ê","í","ó","ô","õ","ú"];
+ CHARS.forEach(ch=>{
+   const b=document.createElement("button");
+   b.type="button";
+   b.textContent=ch;
+   b.setAttribute("aria-label","Zeichen "+ch);
+   b.onclick=()=>{
+     const el=activePtInput;
+     if(!el)return;
+     const s=el.selectionStart==null?el.value.length:el.selectionStart;
+     const e=el.selectionEnd==null?s:el.selectionEnd;
+     el.value=el.value.slice(0,s)+ch+el.value.slice(e);
+     el.setSelectionRange(s+ch.length,s+ch.length);
+     el.focus();
+     activePtInput=el;
+   };
+   chars.appendChild(b);
+ });
+ box.appendChild(chars);
+
  const add=document.createElement("button");add.className="btn";add.textContent="➕ Wort hinzufügen";
  add.onclick=()=>{DATA[k].push(["",""]);editChapter(k);};
  box.appendChild(add);
@@ -471,6 +499,29 @@ function editChapter(k){
  };
  box.appendChild(save);
 }
+
+function setupSpecialChars(){
+ const chars=document.getElementById("tutorChars");
+ const target=document.getElementById("tutorIn");
+ if(!chars||!target)return;
+ const CHARS=["á","à","â","ã","ç","é","ê","í","ó","ô","õ","ú"];
+ CHARS.forEach(ch=>{
+   const b=document.createElement("button");
+   b.type="button";
+   b.textContent=ch;
+   b.setAttribute("aria-label","Zeichen "+ch);
+   b.onclick=()=>{
+     const s=target.selectionStart==null?target.value.length:target.selectionStart;
+     const e=target.selectionEnd==null?s:target.selectionEnd;
+     target.value=target.value.slice(0,s)+ch+target.value.slice(e);
+     target.setSelectionRange(s+ch.length,s+ch.length);
+     target.focus();
+   };
+   chars.appendChild(b);
+ });
+}
+
+setupSpecialChars();
 
 function tutorCheck(){
  const t=document.getElementById("tutorIn").value.trim();
