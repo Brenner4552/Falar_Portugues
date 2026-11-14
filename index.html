@@ -196,26 +196,25 @@ async function cloudLoad(){
     const {data,error}=await cloud.from("falar_data").select("data").eq("id",SYNC_ID).maybeSingle();
     if(error) throw error;
 
-    const localData=JSON.parse(JSON.stringify(DATA));
-    const localState=JSON.parse(JSON.stringify(state));
-
     if(data && data.data){
-      const remoteData=normalizeKitchenData(data.data.data||{});
-      const remoteState=data.data.state||{"stars":{}};
-
-      DATA=mergeData(localData,remoteData);
-      state.stars=Object.assign({},remoteState.stars||{},localState.stars||{});
+      // Beim Öffnen ist die Cloud der aktuelle gemeinsame Stand.
+      // Wichtig: Nicht mit dem alten lokalen Stand zusammenführen, denn
+      // dadurch würden bewusst geänderte/gelöschte Wörter wieder auftauchen.
+      DATA=normalizeKitchenData(data.data.data||{});
+      state=data.data.state||{"stars":{}};
+      if(!state.stars) state.stars={};
 
       localStorage.setItem("falarWebData",JSON.stringify(DATA));
       localStorage.setItem("falarWebState",JSON.stringify(state));
 
       refreshDataUI();
-      // Den zusammengeführten Stand auch wieder in die Cloud schreiben.
-      await cloudSync();
+      setSyncStatus("☁️ Synchronisiert");
     }else{
+      // Noch keine Cloud-Daten vorhanden: den lokalen Stand erstmals hochladen.
       await cloudSync();
     }
   }catch(e){
+    console.error("Supabase-Load:",e);
     setSyncStatus("⚠️ Cloud-Sync nicht möglich");
   }
 }
