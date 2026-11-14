@@ -428,6 +428,8 @@ function renderCard(){
   const p=document.createElement("div");p.className="big";p.textContent=learn.flipped?x.de:x.pt;c.appendChild(p);
   const small=document.createElement("div");small.className="translation";small.textContent=learn.flipped?x.pt:"";c.appendChild(small);
   const speak=document.createElement("button");speak.className="btn";speak.textContent="🔊 Portugiesisch";speak.onclick=()=>speakPt(x.pt);c.appendChild(speak);
+  // Beim Öffnen/Weiterblättern wird das portugiesische Wort automatisch vorgelesen.
+  if(!learn.flipped){ setTimeout(()=>speakPt(x.pt),120); }
 }
 document.getElementById("learnChapter").onchange=()=>{learn.idx=0;learn.flipped=false;renderCard();};
 function flipCard(){learn.flipped=!learn.flipped;renderCard();}
