@@ -9,26 +9,26 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>Falar Português – Web</title>
 <style>
-:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#18202a;background:#f4f6f8}
+:root{font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:#13223f;background:#f2f6fb}
 *{box-sizing:border-box} body{margin:0} button,select,input{font:inherit}
-.app{max-width:1000px;margin:auto;padding:20px}
-header{background:white;border-radius:20px;padding:24px;box-shadow:0 4px 18px #00000012}
-h1{margin:0 0 6px} h2{margin-top:0} .sub{color:#5f6873;margin:0}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-nav button,.btn{border:1px solid #cfd6dd;background:white;border-radius:12px;padding:10px 14px;cursor:pointer}
-nav button.active,.btn.primary{background:#1f2937;color:white;border-color:#1f2937}
-.panel{background:white;border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 3px 15px #0000000d}
+.app{max-width:760px;margin:auto;padding:20px}
+header{background:#fff;border-radius:14px;padding:20px;box-shadow:none;border:1px solid #d3ddeb}
+h1{margin:0 0 6px;font-family:"Young Serif",Georgia,serif;font-weight:400} h2{margin-top:0;font-family:"Young Serif",Georgia,serif;font-weight:400} .sub{color:#55657f;margin:0}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin:16px 0;border-bottom:1px solid #d3ddeb}
+nav button,.btn{border:1px solid #d3ddeb;background:#fff;color:#13223f;border-radius:8px;padding:10px 14px;cursor:pointer}
+nav button.active,.btn.primary{background:#1f4fa3;color:#fff;border-color:#1f4fa3}
+.panel{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;border:1px solid #d3ddeb}
 .hidden{display:none!important}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.chapter{text-align:left;padding:16px;border:1px solid #d7dde3;border-radius:15px;background:#fff;cursor:pointer}
-.chapter b{display:block;font-size:1.05rem} .chapter small{color:#6a737d}
+.chapter{text-align:left;padding:16px;border:1px solid #d3ddeb;border-radius:10px;background:#fff;cursor:pointer}
+.chapter b{display:block;font-size:1.05rem;font-family:"Young Serif",Georgia,serif;font-weight:400} .chapter small{color:#55657f}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .big{font-size:2rem;margin:10px 0} .pt{font-family:system-ui,sans-serif}
-.translation{font-size:1.25rem;color:#59636e}
-.status{padding:10px 12px;background:#eef3f7;border-radius:10px;margin:10px 0}
+.translation{font-size:1.25rem;color:#55657f}
+.status{padding:10px 12px;background:#e0eafa;border-radius:10px;margin:10px 0;color:#13223f}
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 input[type=range]{width:220px} textarea{width:100%;padding:12px;border:1px solid #cfd6dd;border-radius:12px}
-table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px solid #e6eaee;text-align:left}
+table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px solid #d3ddeb;text-align:left}
 .star{cursor:pointer;font-size:1.25rem;background:none;border:0}
 .voiceok{font-size:.9rem;color:#49606e} .warning{background:#fff4d6;padding:12px;border-radius:12px}
 </style>
@@ -162,18 +162,9 @@ async function cloudSync(){
       .maybeSingle();
     if(readError) throw readError;
 
-    let mergedData=DATA;
-    let mergedState=state;
-
-    if(remote && remote.data){
-      const remoteData=normalizeKitchenData(remote.data.data||{});
-      const remoteState=remote.data.state||{"stars":{}};
-      mergedData=mergeData(DATA,remoteData);
-      mergedState.stars=Object.assign({},remoteState.stars||{},state.stars||{});
-    }
-
-    DATA=normalizeKitchenData(mergedData);
-    state=mergedState;
+    // Der lokale Stand ist beim Speichern maßgeblich.
+    // Dadurch bleiben bewusst gelöschte Wörter auch nach einem Neustart gelöscht.
+    DATA=normalizeKitchenData(DATA);
 
     localStorage.setItem("falarWebData",JSON.stringify(DATA));
     localStorage.setItem("falarWebState",JSON.stringify(state));
@@ -254,7 +245,7 @@ async function saveAllData(){
 }
 
 
-let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","der Tag"],["a semana","die Woche"],["o mês","der Monat"],["o ano","das Jahr"],["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["de manhã","am Morgen"],["à tarde","am Nachmittag"],["à noite","am Abend / in der Nacht"]],"fragen":[["quem","wer"],["o que","was"],["onde","wo"],["quando","wann"],["como","wie"],["porquê","warum"],["qual","welche/r/s"],["quanto","wie viel"],["quantos","wie viele"]],"kueche_geraete":[["a cozinha","die Küche"],["o frigorífico","der Kühlschrank"],["o congelador","der Gefrierschrank"],["o fogão","der Herd"],["o forno","der Backofen"],["o micro-ondas","die Mikrowelle"],["a máquina de lavar loiça","die Spülmaschine"],["o lava-loiça","das Spülbecken"],["a bancada","die Arbeitsplatte"],["o armário","der Schrank"],["a gaveta","die Schublade"],["a mesa","der Tisch"],["a cadeira","der Stuhl"],["o prato","der Teller"],["o copo","das Glas"],["a chávena","die Tasse"],["a faca","das Messer"],["o garfo","die Gabel"],["a colher","der Löffel"],["a panela","der Topf"],["a frigideira","die Pfanne"],["a cafeteira","die Kaffeekanne"],["a torradeira","der Toaster"],["a chaleira","der Wasserkocher"]],"kueche_verben":[],"haus":[["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]],"essen":[["a água","das Wasser"],["o pão","das Brot"],["o queijo","der Käse"],["a manteiga","die Butter"],["o leite","die Milch"],["o café","der Kaffee"],["o chá","der Tee"],["o sumo","der Saft"],["o vinho","der Wein"],["a cerveja","das Bier"],["a maçã","der Apfel"],["a banana","die Banane"],["a laranja","die Orange"],["o tomate","die Tomate"],["a batata","die Kartoffel"],["o arroz","der Reis"],["a massa","die Nudeln / Pasta"],["a carne","das Fleisch"],["o peixe","der Fisch"],["o frango","das Hähnchen"],["o pequeno-almoço","das Frühstück"],["o almoço","das Mittagessen"],["o jantar","das Abendessen"],["a sobremesa","der Nachtisch"],["a refeição","die Mahlzeit"],["a fome","der Hunger"],["a sede","der Durst"],["delicioso","köstlich"],["quente","heiß / warm"],["frio","kalt"]]};
+let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","der Tag"],["a semana","die Woche"],["o mês","der Monat"],["o ano","das Jahr"],["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["de manhã","am Morgen"],["à tarde","am Nachmittag"],["à noite","am Abend / in der Nacht"]],"fragen":[["quem","wer"],["o que","was"],["onde","wo"],["quando","wann"],["como","wie"],["porquê","warum"],["qual","welche/r/s"],["quanto","wie viel"],["quantos","wie viele"]],"kueche_geraete":[["a cozinha","die Küche"],["o fogão","der Herd"],["o forno","der Backofen"],["o micro-ondas","die Mikrowelle"],["o frigorífico","der Kühlschrank"],["o congelador / a arca congeladora","das Gefrierfach / der Gefrierschrank"],["a máquina de lavar loiça","die Spülmaschine"],["o lava-loiça","das Spülbecken"],["a torneira","der Wasserhahn"],["o exaustor","die Dunstabzugshaube"],["a chaleira elétrica","der Wasserkocher"],["a máquina de café","die Kaffeemaschine"],["a torradeira","der Toaster"],["a varinha mágica / o liquidificador","der Mixer / Pürierstab"],["a bancada","die Arbeitsplatte"],["o armário de cozinha","der Küchenschrank"],["o caixote do lixo","der Mülleimer"],["o prato","der Teller"],["o prato fundo","der tiefe Teller / Suppenteller"],["o prato raso","der flache Teller"],["a tigela / a taça","die Schüssel"],["a chávena","die Tasse"],["o copo","das Glas"],["o copo de vinho","das Weinglas"],["o jarro","der Krug / die Karaffe"],["os talheres","das Besteck"],["o garfo","die Gabel"],["a faca","das Messer"],["a colher","der Löffel"],["a colher de chá","der Teelöffel"],["a colher de sopa","der Suppenlöffel"],["a panela / o tacho","der Topf"],["a frigideira","die Pfanne"],["a tampa","der Deckel"],["a tábua de cortar","das Schneidebrett"],["a colher de pau","der Kochlöffel"],["a espátula","der Pfannenwender"],["a concha","die Schöpfkelle"],["a vara de arames","der Schneebesen"],["o coador / o passador","das Sieb"],["o ralador","die Reibe"],["o descascador","der Schäler"],["o abre-latas","der Dosenöffner"],["o saca-rolhas","der Korkenzieher"],["o rolo da massa","das Nudelholz"],["a travessa de forno","die Auflaufform"],["o pano da loiça","das Geschirrtuch"],["a esponja","der Schwamm"],["o detergente da loiça","das Spülmittel"]],"kueche_verben":[],"haus":[["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]],"essen":[["a água","das Wasser"],["o pão","das Brot"],["o queijo","der Käse"],["a manteiga","die Butter"],["o leite","die Milch"],["o café","der Kaffee"],["o chá","der Tee"],["o sumo","der Saft"],["o vinho","der Wein"],["a cerveja","das Bier"],["a maçã","der Apfel"],["a banana","die Banane"],["a laranja","die Orange"],["o tomate","die Tomate"],["a batata","die Kartoffel"],["o arroz","der Reis"],["a massa","die Nudeln / Pasta"],["a carne","das Fleisch"],["o peixe","der Fisch"],["o frango","das Hähnchen"],["o pequeno-almoço","das Frühstück"],["o almoço","das Mittagessen"],["o jantar","das Abendessen"],["a sobremesa","der Nachtisch"],["a refeição","die Mahlzeit"],["a fome","der Hunger"],["a sede","der Durst"],["delicioso","köstlich"],["quente","heiß / warm"],["frio","kalt"]]};
 const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken"};
 try{ const saved=localStorage.getItem("falarWebData"); if(saved){ const parsed=JSON.parse(saved); if(parsed && typeof parsed==="object") DATA=parsed; } }catch(e){}
 
@@ -298,24 +289,33 @@ function chooseVoices(){
 if(synth){chooseVoices();synth.onvoiceschanged=chooseVoices;}
 
 function speakPt(text, done){
-  if(!synth||!text)return;
+  if(!synth||!text){ if(done)done(); return; }
   synth.cancel();
   const u=new SpeechSynthesisUtterance(text);
   u.lang="pt-PT";
   if(ptVoice)u.voice=ptVoice;
   u.rate=Number(document.getElementById("rate").value||.9);
   u.pitch=1;
-  if(done)u.onend=done;
+  let finished=false;
+  const finish=()=>{ if(finished)return; finished=true; if(done)done(); };
+  u.onend=finish;
+  u.onerror=finish;
   synth.speak(u);
+  // Manche Browser melden bei SpeechSynthesis kein onend zuverlässig.
+  setTimeout(finish,Math.max(2500,text.length*95));
 }
 function speakDe(text, done){
-  if(!synth||!text)return;
+  if(!synth||!text){ if(done)done(); return; }
   const u=new SpeechSynthesisUtterance(text);
   u.lang="de-DE";
   if(deVoice)u.voice=deVoice;
   u.rate=Number(document.getElementById("rate").value||.9);
-  if(done)u.onend=done;
+  let finished=false;
+  const finish=()=>{ if(finished)return; finished=true; if(done)done(); };
+  u.onend=finish;
+  u.onerror=finish;
   synth.speak(u);
+  setTimeout(finish,Math.max(2000,text.length*85));
 }
 
 const selects=["listenChapter","learnChapter"];
