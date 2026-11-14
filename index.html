@@ -29,7 +29,7 @@ nav button.active,.btn.primary{background:#1f4fa3;color:#fff;border-color:#1f4fa
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 input[type=range]{width:220px} textarea{width:100%;padding:12px;border:1px solid #cfd6dd;border-radius:12px}
 table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px solid #d3ddeb;text-align:left}
-.star{cursor:pointer;font-size:1.25rem;background:none;border:0}
+.star{cursor:pointer;font-size:2rem;line-height:1;min-width:48px;min-height:48px;padding:4px;background:none;border:0}
 .voiceok{font-size:.9rem;color:#49606e} .warning{background:#fff4d6;padding:12px;border-radius:12px}
 </style>
 </head>
@@ -65,7 +65,7 @@ table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px s
 <label>Kapitel <select id="listenChapter"></select></label>
 <label>Wiederholung <select id="repeatMode"><option value="normal">normal</option><option value="difficult">⭐ Schwierige öfter</option><option value="random">zufällig</option></select></label>
 <label>Wort wiederholen <select id="wordRepeats"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
-<label>Pause <input id="pauseSec" type="range" min="1" max="8" value="3"><span id="pauseVal">3 s</span></label>
+<label>Pause <input id="pauseSec" type="range" min="1" max="8" value="2"><span id="pauseVal">2 s</span></label>
 </div>
 <div class="status" id="voiceStatus">Prüfe Portugiesisch-Stimme …</div>
 <div class="panel" style="background:#fafbfc">
@@ -103,9 +103,11 @@ table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px s
 <textarea id="tutorIn" rows="3" placeholder="z. B. Eu gosto de cozinhar."></textarea>
 <div class="row" style="margin-top:10px">
 <button class="btn primary" onclick="tutorCheck()">Prüfen</button>
+<button class="btn" id="tutorMic" onclick="startTutorMic()">🎙️ Sprechen</button>
 <button class="btn" onclick="speakPt(document.getElementById('tutorIn').value)">🔊 Vorlesen</button>
 </div>
 <div id="tutorOut" class="status"></div>
+<div id="tutorMicStatus" class="voiceok">🎙️ Mikrofon: wird geprüft …</div>
 </section>
 
 <section id="settings" class="panel page hidden">
@@ -323,7 +325,9 @@ for(const id of selects){
   Object.keys(DATA).forEach(k=>s.add(new Option(NAMES[k],k)));
 }
 document.getElementById("rate").oninput=e=>document.getElementById("rateVal").textContent=Number(e.target.value).toFixed(2);
-document.getElementById("pauseSec").oninput=e=>document.getElementById("pauseVal").textContent=e.target.value+" s";
+const savedPause=localStorage.getItem("falarPauseSec");
+if(savedPause){ const n=Math.max(1,Math.min(8,Number(savedPause))); document.getElementById("pauseSec").value=n; document.getElementById("pauseVal").textContent=n+" s"; }
+document.getElementById("pauseSec").oninput=e=>{ document.getElementById("pauseVal").textContent=e.target.value+" s"; localStorage.setItem("falarPauseSec",e.target.value); };
 
 let listen={running:false,paused:false,index:0,token:0,repeatLeft:0,currentIndex:null};
 function getItems(ch){
@@ -475,6 +479,67 @@ function tutorCheck(){
  else if(/eu vivo em funchal/i.test(t))out="Korrektur: Eu vivo no Funchal. → Üblich ist „no Funchal“.";
  document.getElementById("tutorOut").textContent=out;
 }
+
+// --- Tutor: Spracheingabe ---
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let tutorRecognition = null;
+let tutorListening = false;
+
+function setupTutorRecognition(){
+  const status=document.getElementById("tutorMicStatus");
+  const btn=document.getElementById("tutorMic");
+  if(!status||!btn) return;
+  if(!SpeechRecognitionAPI){
+    status.textContent="⚠️ Mikrofon-Spracheingabe wird von diesem Browser nicht unterstützt.";
+    btn.disabled=true;
+    return;
+  }
+  tutorRecognition=new SpeechRecognitionAPI();
+  tutorRecognition.lang="pt-PT";
+  tutorRecognition.continuous=false;
+  tutorRecognition.interimResults=false;
+  tutorRecognition.maxAlternatives=1;
+  tutorRecognition.onstart=()=>{
+    tutorListening=true;
+    btn.textContent="⏹️ Zuhören …";
+    status.textContent="🎙️ Ich höre zu – bitte jetzt Portugiesisch sprechen …";
+  };
+  tutorRecognition.onresult=(event)=>{
+    const text=event.results[0][0].transcript.trim();
+    document.getElementById("tutorIn").value=text;
+    status.textContent="✓ Erkannt: "+text;
+    tutorCheck();
+  };
+  tutorRecognition.onerror=(event)=>{
+    const msg=event.error==="not-allowed" ? "Mikrofonzugriff wurde nicht erlaubt." :
+              event.error==="no-speech" ? "Ich habe nichts verstanden. Bitte noch einmal sprechen." :
+              "Mikrofonfehler: "+event.error;
+    status.textContent="⚠️ "+msg;
+  };
+  tutorRecognition.onend=()=>{
+    tutorListening=false;
+    btn.textContent="🎙️ Sprechen";
+  };
+  status.textContent="✓ Mikrofon bereit – auf „Sprechen“ drücken und Portugiesisch sagen.";
+}
+
+function startTutorMic(){
+  if(!tutorRecognition){
+    setupTutorRecognition();
+    if(!tutorRecognition) return;
+  }
+  if(tutorListening){
+    tutorRecognition.stop();
+    return;
+  }
+  try{
+    tutorRecognition.start();
+  }catch(e){
+    document.getElementById("tutorMicStatus").textContent="⚠️ Mikrofon konnte nicht gestartet werden. Bitte noch einmal drücken.";
+  }
+}
+
+setupTutorRecognition();
 
 // --- Mobile screen wake lock ---
 let wakeLock = null;
