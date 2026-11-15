@@ -1,4 +1,4 @@
-const CACHE="falar-portugues-v12";
+const CACHE="falar-portugues-v13";
 const ASSETS=["./","./index.html","./manifest.webmanifest"];
 
 self.addEventListener("install",e=>{
