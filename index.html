@@ -86,9 +86,12 @@ table{width:100%;border-collapse:collapse} td,th{padding:9px;border-bottom:1px s
 <label>Kapitel <select id="learnChapter"></select></label>
 <div id="card" class="panel"></div>
 <div class="row">
-<button class="btn primary" onclick="flipCard()">Umdrehen</button>
+<button class="btn primary" id="learnStart">▶ Start</button>
+<button class="btn" id="learnStop">⏹ Stopp</button>
+<button class="btn" onclick="flipCard()">Umdrehen</button>
 <button class="btn" onclick="nextCard()">Weiter</button>
 </div>
+<p class="voiceok">▶ <b>Start</b> läuft die Vokabeln automatisch durch: Portugiesisch → Pause → Deutsch → nächste Karte. Mit <b>Stopp</b> kannst du jederzeit anhalten.</p>
 </section>
 
 <section id="chapters" class="panel page hidden">
@@ -246,8 +249,8 @@ async function saveAllData(){
 }
 
 
-let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","der Tag"],["a semana","die Woche"],["o mês","der Monat"],["o ano","das Jahr"],["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["de manhã","am Morgen"],["à tarde","am Nachmittag"],["à noite","am Abend / in der Nacht"]],"fragen":[["quem","wer"],["o que","was"],["onde","wo"],["quando","wann"],["como","wie"],["porquê","warum"],["qual","welche/r/s"],["quanto","wie viel"],["quantos","wie viele"]],"kueche_geraete":[["a cozinha","die Küche"],["o fogão","der Herd"],["o forno","der Backofen"],["o micro-ondas","die Mikrowelle"],["o frigorífico","der Kühlschrank"],["o congelador / a arca congeladora","das Gefrierfach / der Gefrierschrank"],["a máquina de lavar loiça","die Spülmaschine"],["o lava-loiça","das Spülbecken"],["a torneira","der Wasserhahn"],["o exaustor","die Dunstabzugshaube"],["a chaleira elétrica","der Wasserkocher"],["a máquina de café","die Kaffeemaschine"],["a torradeira","der Toaster"],["a varinha mágica / o liquidificador","der Mixer / Pürierstab"],["a bancada","die Arbeitsplatte"],["o armário de cozinha","der Küchenschrank"],["o caixote do lixo","der Mülleimer"],["o prato","der Teller"],["o prato fundo","der tiefe Teller / Suppenteller"],["o prato raso","der flache Teller"],["a tigela / a taça","die Schüssel"],["a chávena","die Tasse"],["o copo","das Glas"],["o copo de vinho","das Weinglas"],["o jarro","der Krug / die Karaffe"],["os talheres","das Besteck"],["o garfo","die Gabel"],["a faca","das Messer"],["a colher","der Löffel"],["a colher de chá","der Teelöffel"],["a colher de sopa","der Suppenlöffel"],["a panela / o tacho","der Topf"],["a frigideira","die Pfanne"],["a tampa","der Deckel"],["a tábua de cortar","das Schneidebrett"],["a colher de pau","der Kochlöffel"],["a espátula","der Pfannenwender"],["a concha","die Schöpfkelle"],["a vara de arames","der Schneebesen"],["o coador / o passador","das Sieb"],["o ralador","die Reibe"],["o descascador","der Schäler"],["o abre-latas","der Dosenöffner"],["o saca-rolhas","der Korkenzieher"],["o rolo da massa","das Nudelholz"],["a travessa de forno","die Auflaufform"],["o pano da loiça","das Geschirrtuch"],["a esponja","der Schwamm"],["o detergente da loiça","das Spülmittel"]],"kueche_verben":[],"haus":[["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]],"essen":[["a água","das Wasser"],["o pão","das Brot"],["o queijo","der Käse"],["a manteiga","die Butter"],["o leite","die Milch"],["o café","der Kaffee"],["o chá","der Tee"],["o sumo","der Saft"],["o vinho","der Wein"],["a cerveja","das Bier"],["a maçã","der Apfel"],["a banana","die Banane"],["a laranja","die Orange"],["o tomate","die Tomate"],["a batata","die Kartoffel"],["o arroz","der Reis"],["a massa","die Nudeln / Pasta"],["a carne","das Fleisch"],["o peixe","der Fisch"],["o frango","das Hähnchen"],["o pequeno-almoço","das Frühstück"],["o almoço","das Mittagessen"],["o jantar","das Abendessen"],["a sobremesa","der Nachtisch"],["a refeição","die Mahlzeit"],["a fome","der Hunger"],["a sede","der Durst"],["delicioso","köstlich"],["quente","heiß / warm"],["frio","kalt"]]};
-const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken"};
+let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","der Tag"],["a semana","die Woche"],["o mês","der Monat"],["o ano","das Jahr"],["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["de manhã","am Morgen"],["à tarde","am Nachmittag"],["à noite","am Abend / in der Nacht"]],"fragen":[["quem","wer"],["o que","was"],["onde","wo"],["quando","wann"],["como","wie"],["porquê","warum"],["qual","welche/r/s"],["quanto","wie viel"],["quantos","wie viele"]],"kueche_geraete":[["a cozinha","die Küche"],["o fogão","der Herd"],["o forno","der Backofen"],["o micro-ondas","die Mikrowelle"],["o frigorífico","der Kühlschrank"],["o congelador / a arca congeladora","das Gefrierfach / der Gefrierschrank"],["a máquina de lavar loiça","die Spülmaschine"],["o lava-loiça","das Spülbecken"],["a torneira","der Wasserhahn"],["o exaustor","die Dunstabzugshaube"],["a chaleira elétrica","der Wasserkocher"],["a máquina de café","die Kaffeemaschine"],["a torradeira","der Toaster"],["a varinha mágica / o liquidificador","der Mixer / Pürierstab"],["a bancada","die Arbeitsplatte"],["o armário de cozinha","der Küchenschrank"],["o caixote do lixo","der Mülleimer"],["o prato","der Teller"],["o prato fundo","der tiefe Teller / Suppenteller"],["o prato raso","der flache Teller"],["a tigela / a taça","die Schüssel"],["a chávena","die Tasse"],["o copo","das Glas"],["o copo de vinho","das Weinglas"],["o jarro","der Krug / die Karaffe"],["os talheres","das Besteck"],["o garfo","die Gabel"],["a faca","das Messer"],["a colher","der Löffel"],["a colher de chá","der Teelöffel"],["a colher de sopa","der Suppenlöffel"],["a panela / o tacho","der Topf"],["a frigideira","die Pfanne"],["a tampa","der Deckel"],["a tábua de cortar","das Schneidebrett"],["a colher de pau","der Kochlöffel"],["a espátula","der Pfannenwender"],["a concha","die Schöpfkelle"],["a vara de arames","der Schneebesen"],["o coador / o passador","das Sieb"],["o ralador","die Reibe"],["o descascador","der Schäler"],["o abre-latas","der Dosenöffner"],["o saca-rolhas","der Korkenzieher"],["o rolo da massa","das Nudelholz"],["a travessa de forno","die Auflaufform"],["o pano da loiça","das Geschirrtuch"],["a esponja","der Schwamm"],["o detergente da loiça","das Spülmittel"]],"verben":[["ser","sein (dauerhaft)"],["estar","sein (vorübergehend / Ort)"],["ter","haben"],["haver","geben (es gibt = há)"],["poder","können / dürfen"],["querer","wollen"],["dever","sollen / müssen"],["precisar (de)","brauchen / benötigen"],["conseguir","schaffen / können (Fähigkeit)"],["saber","wissen / können (gelernt)"],["ir","gehen / fahren"],["vir","kommen"],["chegar","ankommen"],["sair","ausgehen / verlassen"],["entrar","hineingehen / betreten"],["voltar","zurückkommen / zurückkehren"],["ficar","bleiben / sich befinden"],["andar","gehen (zu Fuß) / laufen"],["fazer","machen / tun"],["dar","geben"],["falar","sprechen / reden"],["dizer","sagen"],["perguntar","fragen"],["responder","antworten"],["ouvir","hören / zuhören"],["entender / compreender","verstehen"],["chamar-se","heißen"],["conhecer","kennen / kennenlernen"],["ajudar","helfen"],["pedir","bitten / bestellen"],["comer","essen"],["beber","trinken"],["tomar","nehmen / zu sich nehmen (z. B. Kaffee)"],["cozinhar","kochen"],["comprar","kaufen"],["pagar","bezahlen"],["vender","verkaufen"],["custar","kosten"],["ver","sehen"],["olhar","schauen / ansehen"],["gostar (de)","mögen / gefallen"],["amar","lieben"],["pensar","denken"],["achar","finden (Meinung) / meinen"],["trabalhar","arbeiten"],["estudar","lernen / studieren"],["dormir","schlafen"],["acordar","aufwachen"],["abrir","öffnen"],["fechar","schließen"]],"kueche_verben":[],"haus":[["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]],"essen":[["a água","das Wasser"],["o pão","das Brot"],["o queijo","der Käse"],["a manteiga","die Butter"],["o leite","die Milch"],["o café","der Kaffee"],["o chá","der Tee"],["o sumo","der Saft"],["o vinho","der Wein"],["a cerveja","das Bier"],["a maçã","der Apfel"],["a banana","die Banane"],["a laranja","die Orange"],["o tomate","die Tomate"],["a batata","die Kartoffel"],["o arroz","der Reis"],["a massa","die Nudeln / Pasta"],["a carne","das Fleisch"],["o peixe","der Fisch"],["o frango","das Hähnchen"],["o pequeno-almoço","das Frühstück"],["o almoço","das Mittagessen"],["o jantar","das Abendessen"],["a sobremesa","der Nachtisch"],["a refeição","die Mahlzeit"],["a fome","der Hunger"],["a sede","der Durst"],["delicioso","köstlich"],["quente","heiß / warm"],["frio","kalt"]]};
+const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","verben":"Verben – 50 wichtige Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken"};
 try{ const saved=localStorage.getItem("falarWebData"); if(saved){ const parsed=JSON.parse(saved); if(parsed && typeof parsed==="object") DATA=parsed; } }catch(e){}
 
 function normalizeKitchenData(obj){
@@ -259,6 +262,7 @@ function normalizeKitchenData(obj){
   }
   if(!Array.isArray(obj.kueche_geraete)) obj.kueche_geraete=[];
   if(!Array.isArray(obj.kueche_verben)) obj.kueche_verben=[];
+  if(!Array.isArray(obj.verben)) obj.verben=[];
   return obj;
 }
 
@@ -273,6 +277,7 @@ function showPage(id){
   document.getElementById(id).classList.remove("hidden");
   document.querySelectorAll("#menu button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   if(id==="chapters") renderChapters();
+  if(id!=="learn" && typeof learnAuto!=="undefined" && learnAuto.running){ stopLearnAuto(); releaseWakeLock(); }
 }
 document.querySelectorAll("#menu button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 
@@ -416,7 +421,39 @@ document.getElementById("listenStop").onclick=()=>{
 };
 
 let learn={idx:0,flipped:false};
-function renderCard(){
+let learnAuto={running:false,token:0,timer:null};
+function stopLearnAuto(){
+  learnAuto.running=false;
+  learnAuto.token++;
+  if(learnAuto.timer){clearTimeout(learnAuto.timer);learnAuto.timer=null;}
+  if(synth) synth.cancel();
+}
+function learnAutoStep(token){
+  if(token!==learnAuto.token||!learnAuto.running)return;
+  const ch=document.getElementById("learnChapter").value;
+  const arr=getItems(ch);
+  if(!arr.length){stopLearnAuto();return;}
+  if(learn.idx>=arr.length)learn.idx=0;
+  learn.flipped=false;
+  renderCard(true);
+  const x=arr[learn.idx];
+  speakPt("  "+x.pt,()=>{
+    if(token!==learnAuto.token||!learnAuto.running)return;
+    learnAuto.timer=setTimeout(()=>{
+      if(token!==learnAuto.token||!learnAuto.running)return;
+      learn.flipped=true;
+      renderCard(true);
+      speakDe(x.de,()=>{
+        if(token!==learnAuto.token||!learnAuto.running)return;
+        learnAuto.timer=setTimeout(()=>{
+          learn.idx++;
+          learnAutoStep(token);
+        },Number(document.getElementById("pauseSec").value)*1000);
+      });
+    },Number(document.getElementById("pauseSec").value)*1000);
+  });
+}
+function renderCard(suppressAutoSpeak=false){
   const ch=document.getElementById("learnChapter").value, arr=getItems(ch);
   if(!arr.length)return;
   if(learn.idx>=arr.length)learn.idx=0;
@@ -429,11 +466,22 @@ function renderCard(){
   const small=document.createElement("div");small.className="translation";small.textContent=learn.flipped?x.pt:"";c.appendChild(small);
   const speak=document.createElement("button");speak.className="btn";speak.textContent="🔊 Portugiesisch";speak.onclick=()=>speakPt(x.pt);c.appendChild(speak);
   // Beim Öffnen/Weiterblättern wird das portugiesische Wort automatisch vorgelesen.
-  if(!learn.flipped){ setTimeout(()=>speakPt(x.pt),120); }
+  if(!learn.flipped && !suppressAutoSpeak){ setTimeout(()=>speakPt(x.pt),120); }
 }
-document.getElementById("learnChapter").onchange=()=>{learn.idx=0;learn.flipped=false;renderCard();};
+document.getElementById("learnChapter").onchange=()=>{stopLearnAuto();learn.idx=0;learn.flipped=false;renderCard();};
+document.getElementById("learnStart").onclick=()=>{
+  stopLearnAuto();
+  learnAuto.running=true;
+  learnAuto.token++;
+  requestWakeLock();
+  learnAutoStep(learnAuto.token);
+};
+document.getElementById("learnStop").onclick=()=>{
+  stopLearnAuto();
+  releaseWakeLock();
+};
 function flipCard(){learn.flipped=!learn.flipped;renderCard();}
-function nextCard(){learn.idx++;learn.flipped=false;renderCard();}
+function nextCard(){stopLearnAuto();learn.idx++;learn.flipped=false;renderCard();}
 renderCard();
 
 function renderChapters(){
