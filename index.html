@@ -211,9 +211,7 @@ async function cloudLoad(){
       const cloudData=(cloudPayload && cloudPayload.data && typeof cloudPayload.data==="object" && !Array.isArray(cloudPayload.data))
         ? cloudPayload.data : cloudPayload;
       DATA=normalizeKitchenData(cloudData||{});
-      if(!Array.isArray(DATA.verben) || DATA.verben.length===0){
-        DATA.verben=JSON.parse(JSON.stringify(DEFAULT_VERBEN));
-      }
+      ensureDefaultChapters();
       state=(cloudPayload && cloudPayload.state) ? cloudPayload.state : {"stars":{}};
       if(!state.stars) state.stars={};
 
@@ -251,6 +249,7 @@ function refreshDataUI(){
 }
 
 async function saveAllData(){
+  ensureDefaultChapters();
   localStorage.setItem("falarWebData",JSON.stringify(DATA));
   localStorage.setItem("falarWebState",JSON.stringify(state));
   await cloudSync();
@@ -271,8 +270,20 @@ function normalizeKitchenData(obj){
   }
   if(!Array.isArray(obj.kueche_geraete)) obj.kueche_geraete=[];
   if(!Array.isArray(obj.kueche_verben)) obj.kueche_verben=[];
-  if(!Array.isArray(obj.verben) || obj.verben.length===0) obj.verben=JSON.parse(JSON.stringify(DEFAULT_VERBEN));
+  // Das Standardkapitel „Verben“ darf durch einen alten/defekten Cloud-Stand
+  // niemals verschwinden oder leer überschrieben werden.
+  if(!Array.isArray(obj.verben) || obj.verben.length===0){
+    obj.verben=JSON.parse(JSON.stringify(DEFAULT_VERBEN));
+  }
   return obj;
+}
+
+function ensureDefaultChapters(){
+  DATA=normalizeKitchenData(DATA);
+  if(!DATA.verben || DATA.verben.length===0){
+    DATA.verben=JSON.parse(JSON.stringify(DEFAULT_VERBEN));
+  }
+  if(!NAMES.verben) NAMES.verben="Verben – 50 wichtige Verben";
 }
 
 DATA=normalizeKitchenData(DATA);
