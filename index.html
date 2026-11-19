@@ -212,16 +212,24 @@ async function cloudLoad(){
         ? cloudPayload.data : cloudPayload;
       DATA=normalizeKitchenData(cloudData||{});
       ensureDefaultChapters();
+      const hausMigrated = migrateHausChapter();
       state=(cloudPayload && cloudPayload.state) ? cloudPayload.state : {"stars":{}};
       if(!state.stars) state.stars={};
 
       localStorage.setItem("falarWebData",JSON.stringify(DATA));
       localStorage.setItem("falarWebState",JSON.stringify(state));
+      if(hausMigrated){
+        await cloudSync();
+      }
 
       refreshDataUI();
       setSyncStatus("☁️ Synchronisiert");
     }else{
       // Noch keine Cloud-Daten vorhanden: den lokalen Stand erstmals hochladen.
+      const hausMigrated = migrateHausChapter();
+      if(hausMigrated){
+        localStorage.setItem("falarWebData",JSON.stringify(DATA));
+      }
       await cloudSync();
     }
   }catch(e){
