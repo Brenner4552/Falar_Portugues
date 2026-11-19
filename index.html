@@ -278,6 +278,40 @@ function normalizeKitchenData(obj){
   return obj;
 }
 
+function migrateHausChapter(){
+  // Einmalige Migration des bisherigen 26er-Kapitels auf die 50 Vokabeln
+  // aus der Word-Datei. Nur der bekannte alte Stand wird ersetzt; spätere
+  // eigene Änderungen bleiben dadurch erhalten.
+  const oldHaus=[
+    ["a casa","das Haus"],["o apartamento","die Wohnung"],["a sala de estar","das Wohnzimmer"],
+    ["o quarto","das Schlafzimmer"],["a casa de banho","das Badezimmer"],["o corredor","der Flur"],
+    ["a varanda","der Balkon"],["o jardim","der Garten"],["a porta","die Tür"],["a janela","das Fenster"],
+    ["a parede","die Wand"],["o chão","der Boden"],["o teto","die Decke"],["a escada","die Treppe"],
+    ["o sofá","das Sofa"],["a televisão","der Fernseher"],["a cama","das Bett"],["o espelho","der Spiegel"],
+    ["o duche","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],
+    ["a toalha","das Handtuch"],["o candeeiro","die Lampe"],["a chave","der Schlüssel"],
+    ["o aspirador","der Staubsauger"],["a máquina de lavar roupa","die Waschmaschine"]
+  ];
+  const newHaus=[
+    ["o apartamento","die Wohnung"],["a casa","das Haus"],["a sala de estar","das Wohnzimmer"],["o quarto","das Schlafzimmer"],
+    ["a casa de banho","das Badezimmer"],["o corredor","der Flur / der Korridor"],["a varanda","der Balkon"],["o terraço","die Terrasse"],
+    ["o jardim","der Garten"],["a garagem","die Garage"],["a cave","der Keller"],["o sótão","der Dachboden"],["as escadas","die Treppe"],
+    ["o elevador","der Aufzug"],["a porta","die Tür"],["a janela","das Fenster"],["a parede","die Wand"],["o chão","der Boden / der Fußboden"],
+    ["o teto","die Decke"],["o telhado","das Dach"],["a chave","der Schlüssel"],["a fechadura","das Schloss"],["a campainha","die Klingel"],
+    ["o sofá","das Sofa / die Couch"],["a poltrona","der Sessel"],["a mesa","der Tisch"],["a cadeira","der Stuhl"],["a estante","das Regal / das Bücherregal"],
+    ["o armário","der Schrank"],["o guarda-roupa","der Kleiderschrank"],["a cómoda","die Kommode"],["a cama","das Bett"],["o colchão","die Matratze"],
+    ["a almofada","das Kissen / das Kopfkissen"],["o lençol","das Bettlaken"],["o cobertor","die Decke / die Wolldecke"],["o edredão","die Bettdecke / das Federbett"],
+    ["o espelho","der Spiegel"],["o tapete","der Teppich"],["as cortinas","die Vorhänge / die Gardinen"],["os estores","die Rollläden / die Jalousien"],
+    ["o candeeiro","die Lampe / die Leuchte"],["o interruptor","der Lichtschalter"],["a tomada","die Steckdose"],["o aquecimento","die Heizung"],
+    ["o ar condicionado","die Klimaanlage"],["o chuveiro","die Dusche"],["a banheira","die Badewanne"],["o lavatório","das Waschbecken"],["a sanita","die Toilette"]
+  ];
+  if(Array.isArray(DATA.haus) && JSON.stringify(DATA.haus)===JSON.stringify(oldHaus)){
+    DATA.haus=JSON.parse(JSON.stringify(newHaus));
+    return true;
+  }
+  return false;
+}
+
 function ensureDefaultChapters(){
   DATA=normalizeKitchenData(DATA);
   if(!DATA.verben || DATA.verben.length===0){
