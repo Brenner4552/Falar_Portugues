@@ -264,7 +264,9 @@ async function saveAllData(){
   ensureDefaultChapters();
   localStorage.setItem("falarWebData",JSON.stringify(DATA));
   localStorage.setItem("falarWebState",JSON.stringify(state));
-  await cloudSync();
+  const ok=await cloudSync();
+  refreshDataUI();
+  return ok;
 }
 
 
@@ -661,22 +663,60 @@ function renderChapters(){
    b.onclick=()=>editChapter(k);g.appendChild(b);
  });
 }
+function starKey(chapter,index){ return chapter+"_"+index; }
+
+function toggleChapterStar(chapter,index){
+  const key=starKey(chapter,index);
+  state.stars[key]=!state.stars[key];
+  saveAllData();
+}
+
+async function removeChapterItem(chapter,index){
+  // Beim Löschen werden die Stern-Markierungen der nachfolgenden Wörter
+  // auf ihre neuen Indexpositionen verschoben.
+  const nextStars={};
+  Object.keys(state.stars||{}).forEach(key=>{
+    const prefix=chapter+"_";
+    if(!key.startsWith(prefix)){ nextStars[key]=state.stars[key]; return; }
+    const n=Number(key.slice(prefix.length));
+    if(!Number.isInteger(n) || n<index){ nextStars[key]=state.stars[key]; }
+    else if(n>index){ nextStars[prefix+(n-1)]=state.stars[key]; }
+  });
+  state.stars=nextStars;
+  DATA[chapter].splice(index,1);
+  await saveAllData();
+  editChapter(chapter);
+}
+
 function editChapter(k){
  const box=document.getElementById("chapterEdit");box.classList.remove("hidden");
  box.innerHTML="<h3>"+NAMES[k]+"</h3>";
  const table=document.createElement("table");
- table.innerHTML="<tr><th>Portugiesisch</th><th>Deutsch</th><th></th></tr>";
+ table.innerHTML="<tr><th>Portugiesisch</th><th>Deutsch</th><th>⭐</th><th></th></tr>";
  let activePtInput=null;
+
  DATA[k].forEach((x,i)=>{
    const tr=document.createElement("tr");
    const a=document.createElement("input");a.value=x[0];a.style.width="100%";
    a.onfocus=()=>{activePtInput=a;};
    a.onclick=()=>{activePtInput=a;};
    const d=document.createElement("input");d.value=x[1];d.style.width="100%";
-   const del=document.createElement("button");del.className="btn";del.textContent="🗑️";
-   del.onclick=()=>{DATA[k].splice(i,1);editChapter(k);};
+
+   const star=document.createElement("button");
+   star.type="button";
+   star.className="star";
+   star.textContent=state.stars[starKey(k,i)]?"⭐":"☆";
+   star.title=state.stars[starKey(k,i)]?"Als schwierig markiert":"Als schwierig markieren";
+   star.setAttribute("aria-label",star.title);
+   star.onclick=()=>toggleChapterStar(k,i);
+
+   const del=document.createElement("button");
+   del.className="btn";del.textContent="🗑️";del.title="Vokabel löschen";
+   del.onclick=()=>removeChapterItem(k,i);
+
    tr.appendChild(document.createElement("td")).appendChild(a);
    tr.appendChild(document.createElement("td")).appendChild(d);
+   tr.appendChild(document.createElement("td")).appendChild(star);
    tr.appendChild(document.createElement("td")).appendChild(del);
    table.appendChild(tr);
    if(!activePtInput) activePtInput=a;
@@ -707,12 +747,25 @@ function editChapter(k){
  box.appendChild(chars);
 
  const add=document.createElement("button");add.className="btn";add.textContent="➕ Wort hinzufügen";
- add.onclick=()=>{DATA[k].push(["",""]);editChapter(k);};
+ add.onclick=()=>{
+   DATA[k].push(["",""]);
+   editChapter(k);
+ };
  box.appendChild(add);
+
  const save=document.createElement("button");save.className="btn primary";save.textContent="💾 Änderungen speichern";
- save.onclick=()=>{
-   [...table.rows].slice(1).forEach((tr,i)=>{DATA[k][i][0]=tr.cells[0].querySelector("input").value;DATA[k][i][1]=tr.cells[1].querySelector("input").value;});
-   saveAllData();alert("Gespeichert und synchronisiert.");
+ save.onclick=async()=>{
+   // Alle aktuellen Eingabefelder werden zuerst in DATA übernommen.
+   // Erst danach wird lokal und in der Cloud gespeichert.
+   [...table.rows].slice(1).forEach((tr,i)=>{
+     DATA[k][i][0]=tr.cells[0].querySelector("input").value.trim();
+     DATA[k][i][1]=tr.cells[1].querySelector("input").value.trim();
+   });
+
+   const ok=await saveAllData();
+   editChapter(k);
+   if(ok) alert("Gespeichert und synchronisiert.");
+   else alert("Lokal gespeichert. Die Cloud-Synchronisierung konnte nicht abgeschlossen werden.");
  };
  box.appendChild(save);
 }
