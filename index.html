@@ -665,10 +665,19 @@ function renderChapters(){
 }
 function starKey(chapter,index){ return chapter+"_"+index; }
 
-function toggleChapterStar(chapter,index){
+async function toggleChapterStar(chapter,index,button){
   const key=starKey(chapter,index);
   state.stars[key]=!state.stars[key];
-  saveAllData();
+
+  // Sofort sichtbar umschalten, ohne dass der Benutzer erst
+  // den Kapitel-Editor schließen und wieder öffnen muss.
+  if(button){
+    button.textContent=state.stars[key]?"⭐":"☆";
+    button.title=state.stars[key]?"Als schwierig markiert":"Als schwierig markieren";
+    button.setAttribute("aria-label",button.title);
+  }
+
+  await saveAllData();
 }
 
 async function removeChapterItem(chapter,index){
@@ -708,7 +717,7 @@ function editChapter(k){
    star.textContent=state.stars[starKey(k,i)]?"⭐":"☆";
    star.title=state.stars[starKey(k,i)]?"Als schwierig markiert":"Als schwierig markieren";
    star.setAttribute("aria-label",star.title);
-   star.onclick=()=>toggleChapterStar(k,i);
+   star.onclick=()=>toggleChapterStar(k,i,star);
 
    const del=document.createElement("button");
    del.className="btn";del.textContent="🗑️";del.title="Vokabel löschen";
