@@ -377,7 +377,7 @@ function chooseVoices(){
 if(synth){chooseVoices();synth.onvoiceschanged=chooseVoices;}
 
 const INTRA_WORD_PAUSE="⏸";
-const INTRA_WORD_PAUSE_MS=2000;
+const INTRA_WORD_PAUSE_MS=800;
 
 function speakPt(text, done){
   if(!synth||!text){ if(done)done(); return; }
