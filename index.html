@@ -453,6 +453,39 @@ document.getElementById("learnDirection").onchange=()=>{setDirection("learn",doc
 
 let listen={running:false,paused:false,index:0,token:0,repeatLeft:0,currentIndex:null,timerId:null,timerEnd:0};
 
+// --- Audio-Keep-Alive für Android-Tasche/Hintergrund ---
+let keepAliveCtx=null;
+let keepAliveOsc=null;
+let keepAliveGain=null;
+
+async function startAudioKeepAlive(){
+  try{
+    if(!keepAliveCtx){
+      keepAliveCtx=new (window.AudioContext||window.webkitAudioContext)();
+      keepAliveOsc=keepAliveCtx.createOscillator();
+      keepAliveGain=keepAliveCtx.createGain();
+      // Unhörbarer, sehr niedriger Pegel. Ziel ist ein aktiver Audio-Kontext,
+      // damit Android/Browser die laufende Wiedergabe beim Einstecken
+      // des Handys in die Tasche weniger leicht suspendiert.
+      keepAliveOsc.frequency.value=20;
+      keepAliveGain.gain.value=0.00001;
+      keepAliveOsc.connect(keepAliveGain).connect(keepAliveCtx.destination);
+      keepAliveOsc.start();
+    }
+    if(keepAliveCtx.state==="suspended") await keepAliveCtx.resume();
+  }catch(e){
+    console.warn("Audio-Keep-Alive nicht verfügbar:",e);
+  }
+}
+
+async function stopAudioKeepAlive(){
+  try{
+    if(keepAliveCtx){
+      await keepAliveCtx.suspend();
+    }
+  }catch(e){}
+}
+
 function clearListenTimer(){
   if(listen.timerId){ clearInterval(listen.timerId); listen.timerId=null; }
   listen.timerEnd=0;
@@ -487,6 +520,7 @@ function stopListening(message){
   listen.repeatLeft=0;listen.currentIndex=null;
   if(synth) synth.cancel();
   clearListenTimer();
+  stopAudioKeepAlive();
   releaseWakeLock();
   document.getElementById("listenPt").textContent="–";
   document.getElementById("listenDe").textContent="–";
@@ -577,6 +611,7 @@ document.getElementById("listenStart").onclick=()=>{
   listen.repeatLeft=0;listen.currentIndex=null;
   startListenTimer();
   requestWakeLock();
+  startAudioKeepAlive();
   listenStep(listen.token);
 };
 document.getElementById("listenPause").onclick=()=>{
@@ -584,6 +619,7 @@ document.getElementById("listenPause").onclick=()=>{
   if(listen.paused){
     synth.cancel();
     if(listen.timerId){ clearInterval(listen.timerId); listen.timerId=null; }
+    stopAudioKeepAlive();
     releaseWakeLock();
     document.getElementById("listenPause").textContent="▶ Weiter";
     const el=document.getElementById("listenTimerStatus");
@@ -605,6 +641,7 @@ document.getElementById("listenPause").onclick=()=>{
       listen.timerId=setInterval(update,1000);
     }
     requestWakeLock();
+    startAudioKeepAlive();
     // Beim Fortsetzen das aktuelle Wort von vorn sprechen.
     listen.repeatLeft=Math.max(1,listen.repeatLeft);
     listenStep(listen.token);
@@ -948,9 +985,13 @@ async function releaseWakeLock(){
 document.addEventListener("visibilitychange", async ()=>{
   if(document.visibilityState==="visible" && listen.running && !listen.paused){
     await requestWakeLock();
+    await startAudioKeepAlive();
   }
 });
-window.addEventListener("pagehide", ()=>{ releaseWakeLock(); });
+window.addEventListener("pagehide", ()=>{
+  stopAudioKeepAlive();
+  releaseWakeLock();
+});
 
 window.addEventListener("load", ()=>{
   setSyncStatus(cloudReady ? "verbinde …" : "Cloud nicht verfügbar");
