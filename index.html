@@ -599,7 +599,14 @@ function listenStep(token){
   document.getElementById("listenDe").textContent="";
   const speakFirst=getDirection("listen")==="dept" ? speakDe : speakPt;
   const speakSecond=getDirection("listen")==="dept" ? speakPt : speakDe;
-  speakFirst(frontText(item,"listen"),()=>{
+
+  // Wichtig: Für die Anzeige werden ⏸-Marker entfernt.
+  // Für die Sprachausgabe müssen sie aber erhalten bleiben,
+  // sonst kann speakPt() keine Pause erkennen.
+  const speechFirst=getDirection("listen")==="dept" ? item.de : item.pt;
+  const speechSecond=getDirection("listen")==="dept" ? item.pt : item.de;
+
+  speakFirst(speechFirst,()=>{
     if(token!==listen.token||!listen.running||listen.paused)return;
     speakSecond(backText(item,"listen"),()=>{
       if(token!==listen.token||!listen.running||listen.paused)return;
@@ -681,13 +688,19 @@ function learnAutoStep(token){
   const first=frontText(x,"learn"), second=backText(x,"learn");
   const speakFirst=getDirection("learn")==="dept" ? speakDe : speakPt;
   const speakSecond=getDirection("learn")==="dept" ? speakPt : speakDe;
-  speakFirst(getDirection("learn")==="dept" ? first : "  "+first,()=>{
+
+  // Auch beim Lernen müssen die ⏸-Marker für die Sprachausgabe
+  // erhalten bleiben. Nur die sichtbare Karte zeigt sie nicht.
+  const speechFirst=getDirection("learn")==="dept" ? x.de : x.pt;
+  const speechSecond=getDirection("learn")==="dept" ? x.pt : x.de;
+
+  speakFirst(getDirection("learn")==="dept" ? speechFirst : "  "+speechFirst,()=>{
     if(token!==learnAuto.token||!learnAuto.running)return;
     learnAuto.timer=setTimeout(()=>{
       if(token!==learnAuto.token||!learnAuto.running)return;
       learn.flipped=true;
       renderCard(true);
-      speakSecond(second,()=>{
+      speakSecond(speechSecond,()=>{
         if(token!==learnAuto.token||!learnAuto.running)return;
         learnAuto.timer=setTimeout(()=>{
           learn.idx++;
