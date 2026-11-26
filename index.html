@@ -384,8 +384,8 @@ function speakPt(text, done){
   synth.cancel();
 
   // ⏸ ist ein bewusst gesetzter Aussprache-Marker.
-  // Er wird nur verwendet, wenn Mike ihn im Kapitel-Editor einfügt.
-  // Dadurch kann eine Deklination/Formenfolge einzeln gesprochen werden.
+  // Jeder Abschnitt wird separat gesprochen. Erst wenn die aktuelle
+  // SpeechSynthesis wirklich beendet ist, beginnt die feste Pause.
   const parts=String(text).split(INTRA_WORD_PAUSE).map(x=>x.trim()).filter(Boolean);
 
   if(parts.length<=1){
@@ -398,8 +398,13 @@ function speakPt(text, done){
     if(i>=parts.length){ if(done)done(); return; }
     speakPtSegment(parts[i],()=>{
       i++;
-      if(i<parts.length) setTimeout(next,INTRA_WORD_PAUSE_MS);
-      else if(done) done();
+      if(i<parts.length){
+        // Die Pause wird ausdrücklich außerhalb der Speech-Synthesis-Warteschlange
+        // erzeugt. Dadurch kann Android die Pause nicht „überspringen“.
+        setTimeout(next,INTRA_WORD_PAUSE_MS);
+      }else if(done){
+        done();
+      }
     });
   };
   next();
