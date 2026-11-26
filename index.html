@@ -376,9 +376,37 @@ function chooseVoices(){
 }
 if(synth){chooseVoices();synth.onvoiceschanged=chooseVoices;}
 
+const INTRA_WORD_PAUSE="⏸";
+const INTRA_WORD_PAUSE_MS=800;
+
 function speakPt(text, done){
   if(!synth||!text){ if(done)done(); return; }
   synth.cancel();
+
+  // ⏸ ist ein bewusst gesetzter Aussprache-Marker.
+  // Er wird nur verwendet, wenn Mike ihn im Kapitel-Editor einfügt.
+  // Dadurch kann eine Deklination/Formenfolge einzeln gesprochen werden.
+  const parts=String(text).split(INTRA_WORD_PAUSE).map(x=>x.trim()).filter(Boolean);
+
+  if(parts.length<=1){
+    speakPtSegment(parts[0]||String(text).trim(),done);
+    return;
+  }
+
+  let i=0;
+  const next=()=>{
+    if(i>=parts.length){ if(done)done(); return; }
+    speakPtSegment(parts[i],()=>{
+      i++;
+      if(i<parts.length) setTimeout(next,INTRA_WORD_PAUSE_MS);
+      else if(done) done();
+    });
+  };
+  next();
+}
+
+function speakPtSegment(text, done){
+  if(!synth||!text){ if(done)done(); return; }
   const u=new SpeechSynthesisUtterance(text);
   u.lang="pt-PT";
   if(ptVoice)u.voice=ptVoice;
@@ -480,11 +508,14 @@ function setDirection(kind,value){
   document.getElementById(id).value=value;
   localStorage.setItem("falarDirection_"+kind,value);
 }
+function cleanSpeechMarker(text){
+  return String(text||"").split(INTRA_WORD_PAUSE).join(" ");
+}
 function frontText(item,kind){
-  return getDirection(kind)==="dept" ? item.de : item.pt;
+  return getDirection(kind)==="dept" ? item.de : cleanSpeechMarker(item.pt);
 }
 function backText(item,kind){
-  return getDirection(kind)==="dept" ? item.pt : item.de;
+  return getDirection(kind)==="dept" ? cleanSpeechMarker(item.pt) : item.de;
 }
 function pickNext(arr){
   const mode=document.getElementById("repeatMode").value;
@@ -754,6 +785,25 @@ function editChapter(k){
    chars.appendChild(b);
  });
  box.appendChild(chars);
+
+ const pause=document.createElement("button");
+ pause.type="button";
+ pause.className="btn";
+ pause.textContent="⏸ Pause";
+ pause.title="Kurze Pause in der portugiesischen Aussprache einfügen";
+ pause.onclick=()=>{
+   const el=activePtInput;
+   if(!el)return;
+   const s=el.selectionStart==null?el.value.length:el.selectionStart;
+   const e=el.selectionEnd==null?s:el.selectionEnd;
+   const marker=" "+INTRA_WORD_PAUSE+" ";
+   el.value=el.value.slice(0,s)+marker+el.value.slice(e);
+   const pos=s+marker.length;
+   el.setSelectionRange(pos,pos);
+   el.focus();
+   activePtInput=el;
+ };
+ box.appendChild(pause);
 
  const add=document.createElement("button");add.className="btn";add.textContent="➕ Wort hinzufügen";
  add.onclick=()=>{
