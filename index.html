@@ -386,7 +386,14 @@ function speakPt(text, done){
   // ⏸ ist ein bewusst gesetzter Aussprache-Marker.
   // Jeder Abschnitt wird separat gesprochen. Erst wenn die aktuelle
   // SpeechSynthesis wirklich beendet ist, beginnt die feste Pause.
-  const parts=String(text).split(INTRA_WORD_PAUSE).map(x=>x.trim()).filter(Boolean);
+  // Neben dem ⏸-Marker behandeln wir Kommas ebenfalls als bewusste Pause.
+  // Das ist besonders praktisch für die unregelmäßigen Verben, die als
+  // eine Reihe eingegeben werden: "eu sou, tu és, ele é, ...".
+  const parts=String(text)
+    .split(INTRA_WORD_PAUSE)
+    .flatMap(part=>part.split(","))
+    .map(x=>x.trim())
+    .filter(Boolean);
 
   if(parts.length<=1){
     speakPtSegment(parts[0]||String(text).trim(),done);
