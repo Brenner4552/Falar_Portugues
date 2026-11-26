@@ -786,24 +786,26 @@ function editChapter(k){
  });
  box.appendChild(chars);
 
- const pause=document.createElement("button");
- pause.type="button";
- pause.className="btn";
- pause.textContent="⏸ Pause";
- pause.title="Kurze Pause in der portugiesischen Aussprache einfügen";
- pause.onclick=()=>{
-   const el=activePtInput;
-   if(!el)return;
-   const s=el.selectionStart==null?el.value.length:el.selectionStart;
-   const e=el.selectionEnd==null?s:el.selectionEnd;
-   const marker=" "+INTRA_WORD_PAUSE+" ";
-   el.value=el.value.slice(0,s)+marker+el.value.slice(e);
-   const pos=s+marker.length;
-   el.setSelectionRange(pos,pos);
-   el.focus();
-   activePtInput=el;
- };
- box.appendChild(pause);
+ if(k==="unregelmaessige"){
+   const pause=document.createElement("button");
+   pause.type="button";
+   pause.className="btn";
+   pause.textContent="⏸ Pause";
+   pause.title="Kurze Pause in der portugiesischen Aussprache einfügen";
+   pause.onclick=()=>{
+     const el=activePtInput;
+     if(!el)return;
+     const s=el.selectionStart==null?el.value.length:el.selectionStart;
+     const e=el.selectionEnd==null?s:el.selectionEnd;
+     const marker=" "+INTRA_WORD_PAUSE+" ";
+     el.value=el.value.slice(0,s)+marker+el.value.slice(e);
+     const pos=s+marker.length;
+     el.setSelectionRange(pos,pos);
+     el.focus();
+     activePtInput=el;
+   };
+   box.appendChild(pause);
+ }
 
  const add=document.createElement("button");add.className="btn";add.textContent="➕ Wort hinzufügen";
  add.onclick=()=>{
