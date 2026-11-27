@@ -274,7 +274,8 @@ let DATA={"zeit": [["a hora","die Uhrzeit"],["o minuto","die Minute"],["o dia","
 const DEFAULT_VERBEN=JSON.parse(JSON.stringify(DATA.verben||[]));
 const DEFAULT_RESTAURANT=JSON.parse(JSON.stringify(DATA.restaurant||[]));
 const DEFAULT_UNREGELMAESSIGE=JSON.parse(JSON.stringify(DATA.unregelmaessige||[]));
-const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","verben":"Verben – 50 wichtige Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken","restaurant":"Restaurant – 50 wichtige Vokabeln","unregelmaessige":"Unregelmäßige Verben – wichtige Formen"};
+const DEFAULT_FAMILIE=[["a família","die Familie"],["os pais","die Eltern"],["a mãe","die Mutter"],["o pai","der Vater"],["a criança / as crianças","das Kind / die Kinder"],["o filho","der Sohn"],["a filha","die Tochter"],["os filhos","die Kinder (Söhne & Töchter)"],["o irmão","der Bruder"],["a irmã","die Schwester"],["os irmãos","die Geschwister"],["o gémeo / os gémeos","der Zwilling / die Zwillinge"],["os avós","die Großeltern"],["a avó","die Großmutter / Oma"],["o avô","der Großvater / Opa"],["o bisavô","der Urgroßvater"],["a bisavó","die Urgroßmutter"],["o neto","der Enkel"],["a neta","die Enkelin"],["os netos","die Enkelkinder"],["o bisneto / a bisneta","der Urenkel / die Urenkelin"],["os familiares / os parentes","die Verwandten"],["o tio","der Onkel"],["a tia","die Tante"],["o primo","der Cousin"],["a prima","die Cousine"],["o sobrinho","der Neffe"],["a sobrinha","die Nichte"],["o marido","der Ehemann"],["a mulher","die Ehefrau"],["o casal","das Ehepaar / Paar"],["o namorado","der Freund / Partner"],["a namorada","die Freundin / Partnerin"],["o noivo","der Verlobte"],["a noiva","die Verlobte"],["o sogro","der Schwiegervater"],["a sogra","die Schwiegermutter"],["os sogros","die Schwiegereltern"],["o genro","der Schwiegersohn"],["a nora","die Schwiegertochter"],["o cunhado","der Schwager"],["a cunhada","die Schwägerin"],["o padrasto","der Stiefvater"],["a madrasta","die Stiefmutter"],["o enteado","der Stiefsohn"],["a enteada","die Stieftochter"],["o padrinho","der Pate / Taufpate"],["a madrinha","die Patin / Taufpatin"],["o afilhado / a afilhada","das Patenkind"]];
+const NAMES={"zeit":"Zeitangaben","fragen":"Fragewörter","kueche_geraete":"Küche – Geräte & Dinge","kueche_verben":"Küche – Verben","verben":"Verben – 50 wichtige Verben","haus":"Haus & Wohnung","essen":"Essen & Trinken","restaurant":"Restaurant – 50 wichtige Vokabeln","unregelmaessige":"Unregelmäßige Verben – wichtige Formen","familie":"Familie"};
 try{ const saved=localStorage.getItem("falarWebData"); if(saved){ const parsed=JSON.parse(saved); if(parsed && typeof parsed==="object") DATA=parsed; } }catch(e){}
 
 function normalizeKitchenData(obj){
@@ -340,6 +341,10 @@ function ensureDefaultChapters(){
   }
   if(!Array.isArray(DATA.unregelmaessige) || DATA.unregelmaessige.length===0){
     DATA.unregelmaessige=JSON.parse(JSON.stringify(DEFAULT_UNREGELMAESSIGE));
+    changed=true;
+  }
+  if(!Array.isArray(DATA.familie) || DATA.familie.length===0){
+    DATA.familie=JSON.parse(JSON.stringify(DEFAULT_FAMILIE));
     changed=true;
   }
   if(!NAMES.verben) NAMES.verben="Verben – 50 wichtige Verben";
